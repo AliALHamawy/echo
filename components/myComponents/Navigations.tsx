@@ -16,7 +16,7 @@ const Navigations = () => {
     const pathname = usePathname();
     return (
         <>
-            <ul className="navContainer flex flex-col gap-1 font-medium text-muted-foreground text-sm">
+            <ul className="navContainer flex flex-col gap-1 font-medium text-muted-foreground text-sm w-12 md:w-full">
                 {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive =
@@ -25,9 +25,11 @@ const Navigations = () => {
                             : pathname.startsWith(item.href);
                     return (
 
-                        <Link href={item.href} className={twMerge("flex px-3 py-2 gap-2 rounded-sm items-center text-muted-foreground transition-all transition-[0.3s] hover:bg-muted hover:text-accent-foreground", isActive && 'bg-muted text-accent-foreground')} key={item.id}>
+                        <Link href={item.href} className={twMerge("flex px-3 py-2 gap-2 rounded-sm items-center text-muted-foreground transition-all hover:bg-muted hover:text-accent-foreground", isActive && 'bg-muted text-accent-foreground')} key={item.id}>
                             <Icon height={18} width={18} />
+                            <p className='hidden md:flex'>
                             {item.title}
+                            </p>
                         </Link>
                     )
                 })}
