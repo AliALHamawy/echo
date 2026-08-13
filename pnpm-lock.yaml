@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@radix-ui/react-slot':
+        specifier: ^1.3.3
+        version: 1.3.3(@types/react@19.2.18)(react@19.2.8)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -38,6 +41,9 @@ importers:
       react-dom:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
+      react-slot:
+        specifier: ^0.1.2
+        version: 0.1.2(react@19.2.8)
       shadcn:
         specifier: ^4.16.2
         version: 4.16.2(typescript@5.9.3)
@@ -3220,6 +3226,11 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  react-slot@0.1.2:
+    resolution: {integrity: sha512-smexOAGO7WyXMXlFgvzBjELeA9BYWKYdONI0vUmzSXYDEhxEG+FrpSPDaSdlc2fi2cKRJQa0q3NSD14hhCrdmw==}
+    peerDependencies:
+      react: ^15
 
   react-style-singleton@2.2.3:
     resolution: {integrity: sha512-b6jSvxvVnyptAiLjbkWLE/lOnR4lfTtDAl+eUC7RZy+QQWc6wRzIV2CE6xBuMmDxc2qIihtDCZD5NPOFl7fRBQ==}
@@ -7030,6 +7041,11 @@ snapshots:
       use-sidecar: 1.1.3(@types/react@19.2.18)(react@19.2.8)
     optionalDependencies:
       '@types/react': 19.2.18
+
+  react-slot@0.1.2(react@19.2.8):
+    dependencies:
+      prop-types: 15.8.1
+      react: 19.2.8
 
   react-style-singleton@2.2.3(@types/react@19.2.18)(react@19.2.8):
     dependencies:
