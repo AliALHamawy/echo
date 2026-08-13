@@ -123,6 +123,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: Geist, sans-serif;
+    
   }
   html {
     @apply font-sans;
