@@ -129,3 +129,20 @@
     @apply font-sans;
   }
 }
+@layer utilities {
+  .cursor-pointer {
+    cursor: default !important;
+  }
+}
+
+/* إجبار جميع العناصر والروابط والأزرار والحالات المجهزة على إخفاء pointer */
+*,
+*::before,
+*::after,
+a,
+button,
+[role="button"],
+input[type="submit"],
+input[type="button"] {
+  cursor: none !important;
+}
