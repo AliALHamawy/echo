@@ -28,7 +28,7 @@ export default function DashboardLayout({
     return (
         <>
             <SmoothCursor />
-            <div className="flex w-full max-w-350 mx-auto min-h-screen">
+            <div className="flex w-full max-w-350 mx-auto sm:min-h-screen">
                         <MobileNav />
                 <aside className="hidden sm:flex flex-col justify-between py-5 px-2 md:px-4 w-16 md:w-64 shrink-0 border-e border-border transition-all duration-300">
                     <div className="flex flex-col gap-8 w-full items-center md:items-start">
