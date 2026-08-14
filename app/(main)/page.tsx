@@ -4,9 +4,11 @@ import MyCard from "@/components/myComponents/MyCard";
 export default function Home() {
   return (
     <>
-    <div className="p-3">
-    <MyCard />
-    </div>
+      <div className="p-3 ">
+        {initialPostsData.map((item:Post) =>(
+<MyCard key={item.id} post={item} />
+))}
+      </div>
     </>
   );
 }
@@ -24,6 +26,7 @@ export interface Post {
   numberOfShares: number;
   isLiked?: boolean;
   isBookmarked?: boolean;
+  repost: number;
 }
 
 export const initialPostsData: Post[] = [
@@ -39,6 +42,7 @@ export const initialPostsData: Post[] = [
     numberOfShares: 2,
     isLiked: true,
     isBookmarked: false,
+    repost: 33,
   },
   {
     id: "post-2",
@@ -52,6 +56,7 @@ export const initialPostsData: Post[] = [
     numberOfShares: 8,
     isLiked: false,
     isBookmarked: true,
+    repost: 30,
   },
   {
     id: "post-3",
@@ -65,6 +70,7 @@ export const initialPostsData: Post[] = [
     numberOfShares: 12,
     isLiked: false,
     isBookmarked: false,
+    repost: 10,
   },
   {
     id: "post-4",
@@ -72,11 +78,13 @@ export const initialPostsData: Post[] = [
     userName: "@techpulse",
     userAvatar: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150",
     postDescription: "Tailwind CSS v4 is bringing native CSS variable integration and lightning-fast build performance with Rust-powered engine performance! ⚡",
+
     createdAt: "1 day ago",
     numberOfLikes: 312,
     numberOfComments: 45,
     numberOfShares: 54,
     isLiked: true,
     isBookmarked: true,
+    repost: 100,
   }
 ];
