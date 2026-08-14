@@ -1,13 +1,17 @@
 import MyCard from "@/components/myComponents/MyCard";
+import QuickPost from "@/components/myComponents/QuickPost";
 
 
 export default function Home() {
   return (
     <>
-      <div className="p-3 ">
-        {initialPostsData.map((item:Post) =>(
-<MyCard key={item.id} post={item} />
-))}
+      <div className="flex flex-col p-3 gap-3">
+        <QuickPost />
+        <div className="flex flex-col">
+        {initialPostsData.map((item: Post) => (
+          <MyCard key={item.id} post={item} />
+        ))}
+        </div>
       </div>
     </>
   );
