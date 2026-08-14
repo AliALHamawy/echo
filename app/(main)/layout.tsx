@@ -24,7 +24,7 @@ export default function DashboardLayout({
     const pathName = usePathname() 
 
     const pageTitle = pageTitles[pathName] || pathName.split("/").filter(Boolean).pop()?.replace(/-/g, " ")|| "Dashboard";
-
+    
     return (
         <>
             <SmoothCursor />
@@ -40,7 +40,7 @@ export default function DashboardLayout({
                     </div>
                 </aside>
                 <main className="flex-1 flex flex-col overflow-y-auto min-w-0">
-                    <div className="border-b h-15 flex items-center pl-5">{pageTitle}</div>
+                    <h1 className="border-b h-15 flex items-center pl-5">{pageTitle}</h1>
                     {children}
                 </main>
                 <aside className="hidden xl:flex flex-col w-72 shrink-0 p-5 border-s border-border">
