@@ -18,7 +18,7 @@ const MobileNav = () => {
     const pathname = usePathname();
 
     return (
-        <div className="flex sm:hidden absolute h-15 w-[90%] bg-accent items-center justify-center rounded-4xl bottom-5 left-[50%] -translate-x-[50%] border border-border shadow-lg z-50">
+        <div className="flex sm:hidden fixed h-15 w-[90%] bg-accent items-center justify-center rounded-4xl bottom-5 left-[50%] -translate-x-[50%] border border-border shadow-lg z-50">
             <svg width="0" height="0" className="absolute">
                 <defs>
                     <linearGradient id="rainbow-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
