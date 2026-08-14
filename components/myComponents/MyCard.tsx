@@ -48,16 +48,16 @@ const MyCard = ({ post }: MyCardProps) => {
                             <Ellipsis className="text-foreground/40 transition-[0.3s] group-hover:text-foreground" width={17} />
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-none">
-                        <DropdownMenuItem className="justify-between focus:bg-[#96ff963b] rounded-none cursor-pointer">
+                    <DropdownMenuContent align="end" className="rounded-none w-40">
+                        <DropdownMenuItem className="justify-between focus:bg-[#96ff963b] rounded-none">
                             Interested
                             <Sparkles className="size-4" />
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="justify-between rounded-none cursor-pointer">
+                        <DropdownMenuItem className="justify-between rounded-none">
                             Not interested
                             <SparklesOff className="size-4" />
                         </DropdownMenuItem>
-                        <DropdownMenuItem variant="destructive" className="justify-between rounded-none cursor-pointer">
+                        <DropdownMenuItem variant="destructive" className="justify-between rounded-none">
                             Report
                             <Flag className="size-4" />
                         </DropdownMenuItem>
@@ -70,15 +70,15 @@ const MyCard = ({ post }: MyCardProps) => {
             </CardContent>
 
             <div className="flex items-center gap-6 text-foreground/40">
-                <div className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer">
+                <div className="flex items-center gap-1.5 hover:text-foreground transition-colors background-red-300">
                     <Heart className="size-4" />
                     <span className="text-xs">{numberOfLikes}</span>
                 </div>
-                <div className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer">
+                <div className="flex items-center gap-1.5 hover:text-foreground transition-colors">
                     <MessageCircle className="size-4" />
                     <span className="text-xs">{numberOfComments}</span>
                 </div>
-                <div className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer">
+                <div className="flex items-center gap-1.5 hover:text-foreground transition-colors">
                     <Repeat2 className="size-4" />
                     <span className="text-xs">{repost}</span>
                 </div>
