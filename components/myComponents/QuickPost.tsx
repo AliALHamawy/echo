@@ -67,7 +67,7 @@ const QuickPost = () => {
                     <div className="flex gap-2">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <button className="outline-none hover:bg-popover border flex p-1 items-center justify-between group rounded-xl transition-colors ">
+                                <button className="outline-none hover:bg-muted dark:hover:bg-popover border flex p-1 items-center justify-between group rounded-xl transition-colors ">
                                     <div className="flex gap-1 items-center text-[12px]">
                                         <Globe height={16} />
                                         Public
@@ -94,14 +94,14 @@ const QuickPost = () => {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <button className="outline-none hover:bg-popover border flex p-1 pr-3 items-center justify-between group rounded-xl transition-colors ">
+                        <button className="outline-none hover:bg-muted dark:hover:bg-popover border flex p-1 pr-3 items-center justify-between group rounded-xl transition-colors ">
                             <div className="flex gap-1 items-center text-[12px]">
                                 <MessageCircle height={16} />
                                 Comments on
                             </div>
                         </button>
                     </div>
-                        <button className="outline-none text-[#000] bg-foreground/50 border flex p-1 px-3 items-center justify-center text-center group rounded-xl transition-colors ">
+                        <button className="outline-none text-muted bg-foreground/30 dark:bg-foreground/50 border flex p-1 px-3 items-center justify-center text-center group rounded-xl transition-colors ">
                             Post
                         </button>
                 </div>
