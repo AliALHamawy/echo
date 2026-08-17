@@ -9,7 +9,6 @@ import { SearchBar } from "@/components/myComponents/SearchBar";
 import TrendingCard from "@/components/myComponents/TrendingCard";
 import { SmoothCursor } from "@/components/ui/smooth-cursor";
 import { usePathname } from "next/navigation";
-import Terms from "./terms/page";
 import Link from "next/link";
 
 const pageTitles: Record<string, string> = {
@@ -26,9 +25,12 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
 
-    const pathName = usePathname()
+    const pathName = usePathname();
 
     const pageTitle = pageTitles[pathName] || pathName.split("/").filter(Boolean).pop()?.replace(/-/g, " ") || "Dashboard";
+    
+    // Check if current route is the home page
+    const isHomePage = pathName === "/";
 
     return (
         <>
@@ -49,14 +51,17 @@ export default function DashboardLayout({
                     <h1 className="border-b h-15 sm:hidden flex items-center pl-5"><Logo myClassName="flex" /></h1>
                     {children}
                 </main>
-                <aside className="hidden xl:flex flex-col w-72 shrink-0 p-5 border-s border-border">
-                    <div className="flex flex-col justify-start w-full gap-4">
-                        <SearchBar />
-                        <FollowingCard />
-                        <TrendingCard />
-                        <span className="text-muted-foreground text-[12px]">Echo · <Link href="/terms">Terms</Link> · <Link href="/privacy">Privacy</Link> · © 2026</span>
-                    </div>
-                </aside>
+                
+                {isHomePage && (
+                    <aside className="hidden xl:flex flex-col w-72 shrink-0 p-5 border-s border-border overflow-y-auto no-scrollbar">
+                        <div className="flex flex-col justify-start w-full gap-4">
+                            <SearchBar />
+                            <FollowingCard />
+                            <TrendingCard />
+                            <span className="text-muted-foreground text-[12px]">Echo · <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link> · <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link> · © 2026</span>
+                        </div>
+                    </aside>
+                )}
             </div>
         </>
     );

@@ -39,7 +39,7 @@ const MyCard = ({ post }: MyCardProps) => {
                         <span className='text-sm text-foreground leading-tight'>{name}</span>
                         <span className='text-xs text-muted-foreground'>{userName}</span>
                     </div>
-                    <span className='text-xs text-muted-foreground ml-2'>• {createdAt}</span>
+                    <span className='text-xs text-muted-foreground ml-2'>{createdAt}</span>
                 </div>
 
                 <DropdownMenu>
