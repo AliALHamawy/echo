@@ -215,7 +215,7 @@ useEffect(() => {
                   {isActive && (
                     <motion.div
                       layoutId={`active-pill-${layoutId}`}
-                      className="absolute inset-0 bg-foreground rounded-xl -z-0"
+                      className="absolute inset-0 bg-foreground rounded-xl z-0"
                       transition={{
                         type: "spring",
                         stiffness: 380,
