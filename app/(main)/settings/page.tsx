@@ -16,7 +16,7 @@ const Settings = () => {
   return (
     <>
       <div className='flex flex-col justify-center items-center py-10 px-4'>
-        <div className='max-w-168.75 w-full flex flex-col gap-8'>
+        <div className='max-w-168.75 w-full flex flex-col gap-4'>
           <div className="flex flex-col">
             <span className="text-xl font-bold">Settings</span>
             <span className="text-xs text-muted-foreground">Manage your account preferences and app configurations.</span>
@@ -52,8 +52,8 @@ const Settings = () => {
               );
             })}
           </div>
-          <AnimatePresence mode="wait" >
-
+          <AnimatePresence mode="wait">
+            <span className="text-xs uppercase text-muted-foreground m-0 p-0 ">{tab}</span>
             { tab != "Security" &&<div className="flex flex-col w-full border border-muted">
               <motion.div className="flex flex-col w-full divide-y divide-border">
                 {tab === "General" && <GeneralSettings />}
