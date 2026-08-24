@@ -54,20 +54,20 @@ const Settings = () => {
           </div>
           <AnimatePresence mode="wait">
             <span className="text-xs uppercase text-muted-foreground m-0 p-0 ">{tab}</span>
-            { tab != "Security" &&<div className="flex flex-col w-full border border-muted">
+            {tab === "Security" ?( <SecuritySettings key="security" />):(
+  <div className="flex flex-col w-full border border-muted" key="settings">
               <motion.div className="flex flex-col w-full divide-y divide-border">
                 {tab === "General" && <GeneralSettings />}
                 {tab === "Apperance" && <ApperanceSettings />}
                 {tab === "Notifications" && <NotificationsSettings />}
                 <Button className="w-25 m-3 rounded-none self-end text-xs">Save changes</Button>
               </motion.div>
-            </div>}
-                {tab === "Security" && <SecuritySettings />}
+            </div>
+)}
           </AnimatePresence>
         </div>
       </div>
     </>
   )
 }
-
 export default Settings

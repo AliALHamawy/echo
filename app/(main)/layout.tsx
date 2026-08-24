@@ -32,8 +32,6 @@ export default function DashboardLayout({
     // Check if current route is the home page
     const isPage = pathName === "/" || pathName === "/profile";
 
-    const isMobile = window.innerWidth <= 768;
-
     return (
         <>
             <SmoothCursor />
@@ -49,7 +47,7 @@ export default function DashboardLayout({
                     </div>
                 </aside>
                 <main className="flex-1 flex flex-col overflow-y-auto min-w-0 no-scrollbar">
-                    {(pathName === "/" || isMobile) && <h1 className="border-b h-15 hidden sm:flex items-center p-4 pl-5 ">{pageTitle}</h1>}
+                    {(pathName === "/" ) && <h1 className="border-b h-15 hidden sm:flex items-center p-4 pl-5 ">{pageTitle}</h1>}
                     <h1 className="border-b h-15 sm:hidden flex items-center pl-5"><Logo myClassName="flex" /></h1>
                     {children}
                 </main>
