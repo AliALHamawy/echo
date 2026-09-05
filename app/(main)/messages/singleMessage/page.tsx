@@ -1,19 +1,14 @@
 import { ChatConversation } from "@/types/chat";
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuContent } from "@/components/ui/dropdown-menu";
-import { Ban, BellOff, Ellipsis, User, ChevronLeft } from "lucide-react";
-import Link from 'next/link';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import MessageHeader from "@/components/myComponents/MessageHeader";
-import { MessageGroup } from "@/components/ui/message";
-
-// data/mockChat.ts
+import { MessageList } from "@/components/myComponents/MessageList";
 
 export const MOCK_CHAT_DATA: ChatConversation = {
     user: {
         id: "user-ada",
         name: "Ada Vinter",
         username: "@ada_vinter",
-        avatarUrl: "", // يمكنك وضع مسار الصورة أو تركها فارغة لتظهر الـ Initials
+        avatarUrl: "",
         initials: "AV",
         isOnline: true,
     },
@@ -32,17 +27,32 @@ export const MOCK_CHAT_DATA: ChatConversation = {
                     id: "msg-2",
                     senderId: "user",
                     type: "text",
-                    text: "Nice. Did you keep the accent for destructive only?",
-                    timestamp: "09:15 AM",
+                    text: "Nice! Checking it out now.",
+                    timestamp: "09:14 AM",
                     status: "read",
                 },
                 {
                     id: "msg-3",
+                    senderId: "user",
+                    type: "text",
+                    text: "Did you keep the accent color for destructive actions only?",
+                    timestamp: "09:15 AM",
+                    status: "read",
+                },
+                {
+                    id: "msg-4",
                     senderId: "other",
                     type: "code",
-                    text: "Yes, here is how the variables look now:",
+                    text: "Yes, exactly. Here is how the CSS variables look now:",
                     codeSnippet: "--destructive: oklch(0.577 0.245 27.325);\n--accent: var(--muted);",
                     timestamp: "09:16 AM",
+                },
+                {
+                    id: "msg-5",
+                    senderId: "other",
+                    type: "text",
+                    text: "Let me know if you need me to adjust the contrast for dark mode.",
+                    timestamp: "09:17 AM",
                 },
             ],
         },
@@ -50,18 +60,34 @@ export const MOCK_CHAT_DATA: ChatConversation = {
             date: "Today",
             items: [
                 {
-                    id: "msg-4",
+                    id: "msg-6",
                     senderId: "user",
                     type: "text",
-                    text: "That reads so much faster. Ship it.",
+                    text: "I reviewed the changes on local setup.",
+                    timestamp: "10:02 AM",
+                    status: "read",
+                },
+                {
+                    id: "msg-7",
+                    senderId: "user",
+                    type: "text",
+                    text: "The contrast in dark mode looks super clean.",
+                    timestamp: "10:03 AM",
+                    status: "read",
+                },
+                {
+                    id: "msg-8",
+                    senderId: "user",
+                    type: "text",
+                    text: "That reads so much faster now. Ship it!",
                     timestamp: "10:05 AM",
                     status: "read",
                 },
                 {
-                    id: "msg-5",
+                    id: "msg-9",
                     senderId: "other",
                     type: "link",
-                    text: "Awesome, preview is updated:",
+                    text: "Awesome! The deployment just finished, here is the preview link:",
                     linkData: {
                         url: "https://staging.echo.app",
                         title: "Design tokens — staging preview",
@@ -70,47 +96,60 @@ export const MOCK_CHAT_DATA: ChatConversation = {
                     timestamp: "10:08 AM",
                 },
                 {
-                    id: "msg-6",
+                    id: "msg-10",
                     senderId: "other",
                     type: "text",
-                    text: "The token rewrite is on staging — take a look?",
+                    text: "Can you test the mobile layout when you have a minute?",
                     timestamp: "10:09 AM",
+                },
+                {
+                    id: "msg-11",
+                    senderId: "user",
+                    type: "text",
+                    text: "On it right now 👍",
+                    timestamp: "10:12 AM",
+                    status: "delivered",
+                },
+                {
+                    id: "msg-12",
+                    senderId: "user",
+                    type: "text",
+                    text: "Testing on iOS Safari and Android Chrome.",
+                    timestamp: "10:13 AM",
+                    status: "delivered",
+                },
+                {
+                    id: "msg-13",
+                    senderId: "user",
+                    type: "text",
+                    text: "Everything looks pixel-perfect! Ready for production merge.",
+                    timestamp: "10:15 AM",
+                    status: "sent",
                 },
             ],
         },
     ],
 };
 
-const page = () => {
+const Page = () => {
     return (
-        <>
-            <div className="flex flex-col h-full justify-between">
-                <MessageHeader
-                    name={MOCK_CHAT_DATA.user.name}
-                    username={MOCK_CHAT_DATA.user.username}
-                    lastSeen={MOCK_CHAT_DATA.user.lastSeen || ""}
-                    avtarImage={MOCK_CHAT_DATA.user.avatarUrl}
-                    avatarFallback={MOCK_CHAT_DATA.user.initials.slice(0, 2).toUpperCase()}
-                />
-                <div className="flex flex-col space-y-6 px-2 py-4 justify-end w-full">
-                    <div className="flex gap-2 items-center">
-                        <Avatar className='h-8 w-8'>
-                            <AvatarImage src={MOCK_CHAT_DATA.user.avatarUrl} />
-                            <AvatarFallback>{MOCK_CHAT_DATA.user.initials.slice(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <p className="text-md font-medium text-muted-foreground bg-muted/60 px-3 py-2 rounded-full w-fit ">aaaaaaaaaaaa</p>
-                    </div>
-                    <div className="flex gap-2 items-center self-end">
-                        <p className="text-md font-medium text-muted bg-foreground px-3 py-2 rounded-full w-fit ">aaaaaaaaaaaa</p>
-                        <Avatar className='h-8 w-8'>
-                            <AvatarImage src="https://github.com/shadcn.png" />
-                            <AvatarFallback>{"Ali AL-Hamawy".slice(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                    </div>
-                </div>
-            </div>
-        </>
-    )
-}
+        <div className="flex flex-col h-full justify-between">
+            {/* Header */}
+            <MessageHeader
+                name={MOCK_CHAT_DATA.user.name}
+                username={MOCK_CHAT_DATA.user.username}
+                lastSeen={MOCK_CHAT_DATA.user.lastSeen || ""}
+                avtarImage={MOCK_CHAT_DATA.user.avatarUrl}
+                avatarFallback={MOCK_CHAT_DATA.user.initials.slice(0, 2).toUpperCase()}
+            />
 
-export default page
+            <MessageList
+                otherUserAvatar={MOCK_CHAT_DATA.user.avatarUrl}
+                otherUserInitials={MOCK_CHAT_DATA.user.initials.slice(0, 2).toUpperCase()}
+                messages={MOCK_CHAT_DATA.messages}
+            />
+        </div>
+    );
+};
+
+export default Page;
