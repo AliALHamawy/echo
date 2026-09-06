@@ -8,7 +8,7 @@ interface MessageListProps {
     otherUserInitials: string;
 }
 
-export const MessageList = ({
+const MessageList = ({
     messages,
     otherUserAvatar,
     otherUserInitials,
@@ -27,8 +27,7 @@ export const MessageList = ({
                     {group.items.map((item, index) => {
                         const isMe = item.senderId === "user";
                         const nextItem = group.items[index + 1];
-                        const isLastFromSender =
-                            !nextItem || nextItem.senderId !== item.senderId;
+                        const isLastFromSender = !nextItem || nextItem.senderId !== item.senderId;
 
                         return isMe ? (
                             /* رسائلي */
@@ -83,3 +82,4 @@ export const MessageList = ({
         </div>
     );
 };
+export default MessageList;

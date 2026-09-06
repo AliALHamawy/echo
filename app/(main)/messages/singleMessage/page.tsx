@@ -1,7 +1,7 @@
 import { ChatConversation } from "@/types/chat";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import MessageHeader from "@/components/myComponents/MessageHeader";
-import { MessageList } from "@/components/myComponents/MessageList";
+import MessageList from "@/components/myComponents/MessageList";
+import MessageInput from "@/components/myComponents/MessageInput";
 
 export const MOCK_CHAT_DATA: ChatConversation = {
     user: {
@@ -133,7 +133,7 @@ export const MOCK_CHAT_DATA: ChatConversation = {
 
 const Page = () => {
     return (
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex flex-col h-[100dvh] justify-between relative">
             {/* Header */}
             <MessageHeader
                 name={MOCK_CHAT_DATA.user.name}
@@ -148,6 +148,7 @@ const Page = () => {
                 otherUserInitials={MOCK_CHAT_DATA.user.initials.slice(0, 2).toUpperCase()}
                 messages={MOCK_CHAT_DATA.messages}
             />
+            <MessageInput />
         </div>
     );
 };

@@ -10,6 +10,7 @@ import TrendingCard from "@/components/myComponents/TrendingCard";
 import { SmoothCursor } from "@/components/ui/smooth-cursor";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import path from "path";
 
 const pageTitles: Record<string, string> = {
     "/": "Feeds",
@@ -35,8 +36,8 @@ export default function DashboardLayout({
     return (
         <>
             <SmoothCursor />
-            <div className="flex w-full max-w-350 mx-auto sm:h-screen overflow-hidden pb-20 sm:pb-0">
-                <MobileNav />
+            <div className="flex w-full max-w-350 mx-auto sm:h-screen overflow-hidden pb-20 sm:pb-0 z-9999999">
+                {pathName === "/" || pathName === "/profile" && <MobileNav /> || pathName === "/settings" || pathName === "/messages" || pathName === "/notifications" && <MobileNav />}
                 <aside className="hidden sm:flex flex-col justify-between py-5 px-2 md:px-4 w-16 md:w-64 shrink-0 border-e border-border transition-all duration-300 sticky">
                     <div className="flex flex-col gap-8 w-full items-center md:items-start">
                         <Logo />
