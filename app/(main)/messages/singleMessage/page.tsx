@@ -133,22 +133,33 @@ export const MOCK_CHAT_DATA: ChatConversation = {
 
 const Page = () => {
     return (
-        <div className="flex flex-col h-[100dvh] justify-between relative">
+        /* التعديل 1: استخدام h-full بدلاً من h-[100dvh] لأن الـ Layout يمتلك الارتفاع كاملاً */
+        <div className="flex flex-col h-full w-full overflow-hidden justify-between relative">
             {/* Header */}
-            <MessageHeader
-                name={MOCK_CHAT_DATA.user.name}
-                username={MOCK_CHAT_DATA.user.username}
-                lastSeen={MOCK_CHAT_DATA.user.lastSeen || ""}
-                avtarImage={MOCK_CHAT_DATA.user.avatarUrl}
-                avatarFallback={MOCK_CHAT_DATA.user.initials.slice(0, 2).toUpperCase()}
-            />
+            <div className="shrink-0">
+                <MessageHeader
+                    name={MOCK_CHAT_DATA.user.name}
+                    username={MOCK_CHAT_DATA.user.username}
+                    lastSeen={MOCK_CHAT_DATA.user.lastSeen || ""}
+                    avtarImage={MOCK_CHAT_DATA.user.avatarUrl}
+                    avatarFallback={MOCK_CHAT_DATA.user.initials.slice(0, 2).toUpperCase()}
+                />
+            </div>
 
-            <MessageList
-                otherUserAvatar={MOCK_CHAT_DATA.user.avatarUrl}
-                otherUserInitials={MOCK_CHAT_DATA.user.initials.slice(0, 2).toUpperCase()}
-                messages={MOCK_CHAT_DATA.messages}
-            />
-            <MessageInput />
+            {/* List */}
+            {/* التعديل 2: إضافة كلاس no-scrollbar هنا لإخفاء شريط التمرير الأبيض */}
+            <div className="flex-1 overflow-y-auto no-scrollbar min-h-0 w-full">
+                <MessageList
+                    otherUserAvatar={MOCK_CHAT_DATA.user.avatarUrl}
+                    otherUserInitials={MOCK_CHAT_DATA.user.initials.slice(0, 2).toUpperCase()}
+                    messages={MOCK_CHAT_DATA.messages}
+                />
+            </div>
+
+            {/* Input */}
+            <div className="shrink-0">
+                <MessageInput />
+            </div>
         </div>
     );
 };

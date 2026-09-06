@@ -1,4 +1,3 @@
-
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { Ban, BellOff, Ellipsis, User, ChevronLeft } from "lucide-react";
@@ -15,7 +14,7 @@ interface MessageHeaderProps {
 const MessageHeader = ({ name, username, lastSeen, avtarImage, avatarFallback }: MessageHeaderProps) => {
     return (
         <>
-            <div className="sticky top-0 head border-b border-border p-3 py-4 flex items-center justify-between w-full bg-background z-9999">
+            <div className="head border-b border-border p-3 py-4 flex items-center justify-between w-full bg-background z-50">
                 <div className="left flex items-center gap-3 justify-start">
                     <Link href="/messages">
                         <ChevronLeft className='h-6 w-6 text-muted-foreground transition-colors duration-300 hover:text-foreground' />
@@ -60,4 +59,4 @@ const MessageHeader = ({ name, username, lastSeen, avtarImage, avatarFallback }:
     )
 }
 
-export default MessageHeader
+export default MessageHeader;

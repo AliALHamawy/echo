@@ -1,4 +1,3 @@
-
 import { ChatConversation } from "@/types/chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -14,7 +13,7 @@ const MessageList = ({
     otherUserInitials,
 }: MessageListProps) => {
     return (
-        <div className="flex flex-col space-y-6 px-2 py-6 justify-end w-full">
+        <div className="flex flex-col space-y-6 px-2 py-6 w-full relative overflow-y-auto no-scrollbar">
             {messages.map((group) => (
                 <div key={group.date} className="flex flex-col space-y-4">
                     {/* فاصل التاريخ */}
