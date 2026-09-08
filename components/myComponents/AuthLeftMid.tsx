@@ -1,6 +1,6 @@
 "use client"
 import { MessageCircle, Heart, LucideIcon } from "lucide-react"
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, motion } from "motion/react"
 import { useEffect, useState } from "react";
 interface NotificationItem {
     id: number;
@@ -21,7 +21,7 @@ const dotVariants = {
     animate: { opacity: 1, y: -2 }
 }
 
-const AuthRightMid = () => {
+const AuthLeftMid = () => {
     const [items, setItems] = useState<NotificationItem[]>(data)
 
     useEffect(() => {
@@ -90,7 +90,7 @@ const AuthRightMid = () => {
                                             </span>
                                         </div>
                                     </div>
-                                    {item.now === true && <span className="text-xs text-muted-foreground">{item.now}</span>}
+                                    {item.now && <span className="text-xs text-muted-foreground">now</span>}
                                 </motion.div>
                             )
                         })}
@@ -101,4 +101,4 @@ const AuthRightMid = () => {
     )
 }
 
-export default AuthRightMid
+export default AuthLeftMid
