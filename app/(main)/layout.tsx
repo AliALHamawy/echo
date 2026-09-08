@@ -7,7 +7,6 @@ import MobileNav from "@/components/myComponents/MobileNav";
 import Navigations from "@/components/myComponents/Navigations";
 import { SearchBar } from "@/components/myComponents/SearchBar";
 import TrendingCard from "@/components/myComponents/TrendingCard";
-import { SmoothCursor } from "@/components/ui/smooth-cursor";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -34,7 +33,7 @@ export default function DashboardLayout({
 
     return (
         <>
-            <SmoothCursor />
+            
             {/* التعديل هنا: جعل الارتفاع h-dvh ثابت دائماً وإلغاء pb-20 لمنع الـ Scroll الخارجي */}
             <div className="flex w-full max-w-350 mx-auto h-dvh overflow-hidden relative">
                 {(pathName === "/" || pathName === "/profile" || pathName === "/settings" || pathName === "/messages" || pathName === "/notifications") && <MobileNav />}
