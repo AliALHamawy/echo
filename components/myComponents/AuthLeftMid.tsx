@@ -38,8 +38,8 @@ const AuthLeftMid = () => {
     return (
         <>
             <div className="flex flex-col items-start gap-4">
-                <h1 className="text-4xl font-semibold text-primary">Connect, Share, and Chat in Real-time</h1>
-                <p className="text-md text-muted-foreground text-sm">A quieter social space — your feed, your circles, your conversations.</p>
+                <h1 className="text-4xl font-semibold text-primary tracking-wide">Connect, Share, and Chat in Real-time</h1>
+                <p className="text-md text-muted-foreground text-sm tracking-wide">A quieter social space — your feed, your circles, your conversations.</p>
                 <div className="flex flex-col w-full mt-4 gap-2 ">
                     <AnimatePresence mode="popLayout">
                         {items.map((item) => {

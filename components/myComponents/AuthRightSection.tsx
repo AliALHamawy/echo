@@ -11,7 +11,7 @@ const AuthRightSection = () => {
     return (
         <div className="flex flex-col items-center justify-center h-full w-full">
             {/* تم تصحيح flex-row-gap-0 إلى flex flex-row gap-0 */}
-            <div className="relative flex flex-row gap-0 bg-muted/20 p-1 border border-border rounded-none w-full">
+            <div className="relative flex flex-row gap-0 bg-muted/20 p-1 border border-border rounded-none w-full mb-5">
 
                 {/* Sign In Button */}
                 <button
