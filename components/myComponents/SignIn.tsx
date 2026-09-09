@@ -1,16 +1,34 @@
+"use client"
 import { Mail, Lock } from "lucide-react"
 import CustomInput from "@/components/myComponents/CustomInput"
 import { Checkbox } from "@/components/ui/checkbox"
 import GoogleGithub from "./GoogleGithub"
+import FormHeading from "./FormHeading"
+import { useState } from "react"
+import { cn } from "@/lib/utils"
 
 const SignIn = () => {
+    const [formData, setFormData] = useState<{
+        user: string
+        pass: string
+    }>({
+        user: "",
+        pass: "",
+    })
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target
+        setFormData((prev) => ({ ...prev, [id]: value }))
+    }
+
+    const isFormFilled = formData.user.trim() !== "" && formData.pass.trim() !== ""
+
     return (
         <>
             <div className="flex flex-col items-start w-full">
-                <div className="flex flex-col items-start gap-1 mb-3">
-                    <h2 className="text-xl text-forground font-medium tracking-wider">Welcome back</h2>
-                    <h3 className="text-sm text-muted-foreground">Sign in to pick up where you left off.</h3>
-                </div>
+
+                <FormHeading heading="Welcome back" description="Sign in to pick up where you left off." />
+
                 <form action="" className="flex flex-col w-full gap-3 items-start-text-start">
 
                     <CustomInput
@@ -18,24 +36,31 @@ const SignIn = () => {
                         label="Email or username"
                         type="text"
                         placeholder="Enter your email or username"
+                        value={formData.user}
                         icon={Mail}
+                        onChange={handleChange}
                     />
                     <CustomInput
                         id="pass"
                         label="Password"
                         type="password"
                         placeholder="••••••••"
+                        value={formData.pass}
                         icon={Lock}
+                        onChange={handleChange}
                     />
                     <div className="flex justify-between items-center">
 
                         <div className="flex gap-1 items-center text-sm">
                             <Checkbox id="remember" name="Remember" />
-                            <label htmlFor="remember">Remember me</label>
+                            <label htmlFor="remember" className="text-muted-foreground">Remember me</label>
                         </div>
                         <span className="text-sm border-b-2 border-transparent transition-all duration-100 hover:border-primary">Forgot password?</span>
                     </div>
-                    <button className="w-full text-background inline-flex text-center items-center justify-center font-medium p-1 bg-muted-foreground/90">Sign In</button>
+                    <button className={cn(isFormFilled ?
+                        "w-full text-background inline-flex text-center items-center justify-center font-medium p-1 bg-foreground/90"
+                        :
+                        "w-full text-background inline-flex text-center items-center justify-center font-medium p-1 bg-muted-foreground/90")}>Sign In</button>
 
                 </form>
 

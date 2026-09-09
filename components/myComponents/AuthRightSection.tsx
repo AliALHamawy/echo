@@ -3,27 +3,29 @@ import { cn } from "@/lib/utils"
 import { useState } from "react"
 import SignIn from "@/components/myComponents/SignIn"
 import CreateAccount from "@/components/myComponents/CreateAccount"
-import { motion } from "motion/react"
+import { motion, AnimatePresence } from "motion/react"
 
 const AuthRightSection = () => {
     const [user, setUser] = useState<"signIn" | "createAccount">("signIn")
 
-    return (
-        <div className="flex flex-col items-center justify-center h-full w-full">
-            {/* تم تصحيح flex-row-gap-0 إلى flex flex-row gap-0 */}
-            <div className="relative flex flex-row gap-0 bg-muted/20 p-1 border border-border rounded-none w-full mb-5">
+    // تحديد اتجاه الحركة بناءً على التبويب المختار
+    const isSignIn = user === "signIn"
 
+    return (
+        <div className="flex flex-col items-center justify-center h-full w-full overflow-hidden">
+            {/* Tabs Toggle */}
+            <div className="relative flex flex-row gap-0 bg-muted/20 p-1 border border-border rounded-none w-full mb-5">
                 {/* Sign In Button */}
                 <button
                     type="button"
                     className={cn(
                         "relative w-1/2 py-1.5 text-sm font-medium transition-colors duration-200 z-10 flex items-center justify-center overflow-hidden",
-                        user === "signIn" ? "text-primary" : "text-muted-foreground hover:text-primary"
+                        isSignIn ? "text-primary" : "text-muted-foreground hover:text-primary"
                     )}
                     onClick={() => setUser("signIn")}
                 >
                     <span className="relative z-20">Sign In</span>
-                    {user === "signIn" && (
+                    {isSignIn && (
                         <motion.div
                             layoutId="activeTabBackground"
                             className="absolute inset-0 bg-background shadow-sm z-10"
@@ -37,12 +39,12 @@ const AuthRightSection = () => {
                     type="button"
                     className={cn(
                         "relative w-1/2 py-1.5 text-sm font-medium transition-colors duration-200 z-10 flex items-center justify-center overflow-hidden",
-                        user === "createAccount" ? "text-primary" : "text-muted-foreground hover:text-primary"
+                        !isSignIn ? "text-primary" : "text-muted-foreground hover:text-primary"
                     )}
                     onClick={() => setUser("createAccount")}
                 >
                     <span className="relative z-20">Create Account</span>
-                    {user === "createAccount" && (
+                    {!isSignIn && (
                         <motion.div
                             layoutId="activeTabBackground"
                             className="absolute inset-0 bg-background shadow-sm z-10"
@@ -51,7 +53,22 @@ const AuthRightSection = () => {
                     )}
                 </button>
             </div>
-            {user === "signIn" ? <SignIn /> : <CreateAccount />}
+
+            {/* Form Animation Container */}
+            <div className="w-full relative">
+                <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                        key={user}
+                        initial={{ opacity: 0, x: isSignIn ? -20 : 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: isSignIn ? 20 : -20 }}
+                        transition={{ duration: 0.25, ease: "easeInOut" }}
+                        className="w-full"
+                    >
+                        {isSignIn ? <SignIn /> : <CreateAccount />}
+                    </motion.div>
+                </AnimatePresence>
+            </div>
         </div>
     )
 }

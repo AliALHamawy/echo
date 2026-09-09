@@ -7,7 +7,7 @@ export default function Home() {
     <>
       <div className="flex flex-col p-3 gap-3">
         <QuickPost />
-        <div className="flex flex-col">
+        <div className="flex flex-col overflow-y-auto">
         {initialPostsData.map((item: Post) => (
           <MyCard key={item.id} post={item} />
         ))}
@@ -78,6 +78,21 @@ export const initialPostsData: Post[] = [
   },
   {
     id: "post-4",
+    name: "Tech Pulse",
+    userName: "@techpulse",
+    userAvatar: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150",
+    postDescription: "Tailwind CSS v4 is bringing native CSS variable integration and lightning-fast build performance with Rust-powered engine performance! ⚡",
+
+    createdAt: "1 day ago",
+    numberOfLikes: 312,
+    numberOfComments: 45,
+    numberOfShares: 54,
+    isLiked: true,
+    isBookmarked: true,
+    repost: 100,
+  },
+  {
+    id: "post-5",
     name: "Tech Pulse",
     userName: "@techpulse",
     userAvatar: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150",

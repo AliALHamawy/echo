@@ -53,8 +53,7 @@ export default function DashboardLayout({
                     {(pathName === "/" ) && <h1 className="border-b h-15 shrink-0 hidden sm:flex items-center p-4 pl-5">{pageTitle}</h1>}
                     {(pathName === "/" || pathName === "/messages" || pathName === "/notifications" || pathName === "/settings") && <h1 className="border-b h-15 shrink-0 sm:hidden flex items-center pl-5"><Logo myClassName="flex" /></h1>}
                     
-                    {/* الحاوية الداخلية تحصر children بنفس الارتفاع */}
-                    <div className="flex-1 min-h-0 w-full flex flex-col">
+                    <div className="flex-1 min-h-0 w-full flex flex-col overflow-y-auto [scrollbar-width:none] relative">
                         {children}
                     </div>
                 </main>

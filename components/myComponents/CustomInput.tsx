@@ -20,13 +20,10 @@ const CustomInput = ({
     containerClassName,
     ...props
 }: CustomInputProps) => {
-    // حالة التحكم بإظهار وإخفاء كلمة المرور
     const [showPassword, setShowPassword] = useState(false)
 
-    // التحقق مما إذا كان نوع الحقل كلمة مرور
     const isPassword = type === "password"
 
-    // تحديد نوع المدخل الفعلي بناءً على زر التبديل
     const inputType = isPassword ? (showPassword ? "text" : "password") : type
 
     return (
@@ -34,13 +31,12 @@ const CustomInput = ({
             {label && (
                 <label
                     htmlFor={id}
-                    className="text-sm font-medium text-foreground select-none cursor-pointer"
+                    className="text-sm font-medium text-foreground select-none"
                 >
                     {label}
                 </label>
             )}
 
-            {/* حاوية الإدخال */}
             <div className="group flex items-center gap-2 w-full border border-border rounded-none px-3 py-1.5 bg-background transition-colors duration-200 focus-within:border-primary">
                 {Icon && (
                     <Icon className="h-4 w-4 text-muted-foreground transition-colors duration-200 group-focus-within:text-primary shrink-0" />
@@ -57,13 +53,12 @@ const CustomInput = ({
                     {...props}
                 />
 
-                {/* زر إظهار / إخفاء كلمة المرور */}
                 {isPassword && (
                     <button
                         type="button"
                         onClick={() => setShowPassword((prev) => !prev)}
                         className="text-muted-foreground hover:text-foreground focus:outline-none transition-colors duration-200 shrink-0"
-                        tabIndex={-1} // لتجنب إعاقة التنقل بالـ Tab بين الحقول
+                        tabIndex={-1} 
                         aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                         {showPassword ? (
