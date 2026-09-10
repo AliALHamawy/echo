@@ -12,10 +12,14 @@ const navItems = [
     { id: 5, title: "Settings", href: "/settings", icon: Settings },
 ];
 
+const allowedRoutes = ["/", "/profile", "/settings", "/messages", "/notifications"];
 const rainbowClass = "stroke-[url(#rainbow-gradient)] drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]";
 
 const MobileNav = () => {
     const pathname = usePathname(); 
+
+    // إخفاء المكون إذا كان المسار غير مدرج بالقائمة
+    if (!allowedRoutes.includes(pathname)) return null;
 
     return (
         <div className="flex sm:hidden fixed h-15 w-[90%] bg-accent items-center justify-center rounded-4xl bottom-5 left-[50%] -translate-x-[50%] border border-border shadow-lg z-50">

@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card"
 import { useEffect, useState } from "react"
 import { ChevronDown, Globe, Lock, MessageCircle, Repeat, Users } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuContent } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 function useTypewriter(
     phrases: string[],
@@ -53,6 +54,8 @@ const placeholders = [
 ];
 
 const QuickPost = () => {
+    const [content, setContent] = useState("");
+    const hasContent = content.length > 0;
     return (
         <>
             <Card className="flex flex-col p-0 bg-mute-foreground rounded-lg">
@@ -61,7 +64,7 @@ const QuickPost = () => {
                         <AvatarImage src="https://github.com/shadcn.png" />
                         <AvatarFallback>AA</AvatarFallback>
                     </Avatar>
-                    <textarea name="" id="" className="w-full resize-none h-full border-none outline-none" placeholder={useTypewriter(placeholders)}></textarea>
+                    <textarea name="" id="" className="w-full resize-none h-full border-none outline-none" placeholder={useTypewriter(placeholders)} value={content} onChange={(e) => setContent(e.target.value)}></textarea>
                 </div>
                 <div className="border-t border-mute-foreground  p-4 flex justify-between items-center">
                     <div className="flex gap-2">
@@ -101,9 +104,16 @@ const QuickPost = () => {
                             </div>
                         </button>
                     </div>
-                        <button className="outline-none text-muted bg-foreground/30 dark:bg-foreground/50 border flex p-1 px-3 items-center justify-center text-center group rounded-xl transition-colors ">
-                            Post
-                        </button>
+                    <button className={cn(
+                        "outline-none border flex p-1 px-3 items-center justify-center text-center group rounded-xl transition-all duration-200 text-xs font-medium cursor-not-allowed text-background",
+                        hasContent
+                            ? "bg-foreground"
+                            : "bg-foreground/20 dark:bg-foreground/50"
+                    )}
+                    disabled={!hasContent}
+                    >
+                        Post
+                    </button>
                 </div>
             </Card>
         </>
