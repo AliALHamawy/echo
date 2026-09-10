@@ -1,4 +1,3 @@
-import { Input } from "@/components/ui/input"
 import MySelect from "./MySelect"
 import { ACCOUNT_PRIVACY_OPTIONS, COUNTRY_OPTIONS, FOLLOW_REQUESTS_OPTIONS } from "./settingsData"
 import SettibgCard from "./SettibgCard"

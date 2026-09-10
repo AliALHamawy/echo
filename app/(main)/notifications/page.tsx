@@ -1,9 +1,10 @@
 'use client'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AtSign, Heart, MessageSquare } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { AnimatePresence, motion } from "framer-motion";
+
 export type NotificationType = "follow" | "comment" | "mention" | "like";
 
 export interface NotificationItem {
@@ -130,51 +131,45 @@ const ReturnedElement = ({ item, onToggleFollow }: ReturnedElementProps) => {
         >
           {item.followingState ? "Following" : "Follow"}
         </button>
-      )
+      );
     case "mention":
       return (
         <div className="border roundwd-sm flex justify-center tems-center p-1 text-sm text-muted-foreground">
           <AtSign height={15} width={15} />
         </div>
-      )
+      );
     case "like":
       return (
         <div className="border roundwd-sm flex justify-center tems-center p-1 text-sm text-muted-foreground">
           <Heart height={15} width={15} />
         </div>
-      )
+      );
     case "comment":
       return (
         <div className="border roundwd-sm flex justify-center tems-center p-1 text-sm text-muted-foreground">
           <MessageSquare height={15} width={15} />
         </div>
-      )
+      );
     default:
       return null;
   }
-}
+};
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>(mockNotifications);
-  const [activeFilter, setActiveFilter] = useState<FilterTab>("all")
-  const [isMounted, setIsMounted] = useState(false);
-
-const layoutId = useId();
-
-useEffect(() => {
-  setIsMounted(true);
-}, []);
+  const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
+  const layoutId = useId();
 
   const filterdNotifications = notifications.filter((item) => {
     switch (activeFilter) {
       case "mentions":
-        return item.type === "mention"
+        return item.type === "mention";
       case "unreaded":
-        return item.isUnread
+        return item.isUnread;
       default:
-        return true
+        return true;
     }
-  })
+  });
 
   const toggleFollow = (id: string) => {
     setNotifications((prev) =>
@@ -185,6 +180,7 @@ useEffect(() => {
       )
     );
   };
+
   return (
     <>
       <div className="flex flex-col justify-center items-center py-10 px-4">
@@ -194,7 +190,9 @@ useEffect(() => {
               <span className="text-xl font-bold">Notifications</span>
               <span className="text-xs text-muted-foreground">3 unreaded</span>
             </div>
-            <button className="text-xs text-muted-foreground transition-all duration-300 hover:bg-muted p-1 rounded-xs">Mark all as read</button>
+            <button className="text-xs text-muted-foreground transition-all duration-300 hover:bg-muted p-1 rounded-xs">
+              Mark all as read
+            </button>
           </div>
           <div className="flex rounded-2xl p-1 border border-muted w-fit gap-1 bg-background">
             {(["all", "unreaded", "mentions"] as FilterTab[]).map((tab) => {
@@ -243,7 +241,7 @@ useEffect(() => {
                   )}
                 >
                   <div className="flex flex-row gap-2 items-center">
-                    <Avatar className='h-8 w-8'>
+                    <Avatar className="h-8 w-8">
                       {item.user.avatar ? <AvatarImage src={item.user.avatar} /> : null}
                       <AvatarFallback>{item.user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
@@ -252,9 +250,9 @@ useEffect(() => {
                         <span>{item.user.name}</span>
                         <span className="text-muted-foreground text-xs">{item.actionText}</span>
                       </div>
-                      {item.commentOrSnippet ?
-                        <div className="text-xs text-muted-foreground">{item.commentOrSnippet}</div> : null
-                      }
+                      {item.commentOrSnippet ? (
+                        <div className="text-xs text-muted-foreground">{item.commentOrSnippet}</div>
+                      ) : null}
                       <div className="text-xs text-muted-foreground text-[11px] font-light">{item.time}</div>
                     </div>
                   </div>
@@ -266,7 +264,7 @@ useEffect(() => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default Notifications
+export default Notifications;

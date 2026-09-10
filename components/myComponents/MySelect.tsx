@@ -1,4 +1,4 @@
-import { Select, SelectContent, SelectTrigger, SelectValue, SelectGroup, SelectItem, SelectLabel } from "@/components/ui/select"
+import { Select, SelectContent, SelectTrigger, SelectValue, SelectGroup, SelectItem } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
 interface MySelectOptions {

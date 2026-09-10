@@ -5,6 +5,7 @@ import { Mail, Lock, User, AtSign } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useState } from "react"
 import { cn } from "cn"
+import Link from "next/link"
 
 
 const CreateAccount = () => {
@@ -84,7 +85,7 @@ const CreateAccount = () => {
 
                         <div className="flex gap-1 items-center text-sm">
                             <Checkbox id="remember" name="Remember" required />
-                            <label htmlFor="remember" className="text-muted-foreground">I agree to the Terms and Privacy Policy.</label>
+                            <label htmlFor="remember" className="text-muted-foreground">I agree to the <Link className="border-b border-foreground text-foreground" href="/terms">Terms</Link> and <Link className="border-b border-foreground text-foreground" href="/privacyPolicy">Privacy Policy</Link>.</label>
                         </div>
                     </div>
                     <button className={cn(isFormFilled ?

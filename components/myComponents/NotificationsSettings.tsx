@@ -1,4 +1,3 @@
-import React from 'react'
 import SettibgCard from './SettibgCard'
 import { Switch } from '@/components/ui/switch'
 

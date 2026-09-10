@@ -1,5 +1,3 @@
-
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
 

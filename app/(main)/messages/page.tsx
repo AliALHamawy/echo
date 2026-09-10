@@ -1,9 +1,6 @@
 "use client";
 
-import ApperanceSettings from "@/components/myComponents/ApperanceSettings";
-import GeneralSettings from "@/components/myComponents/GeneralSettings";
-import SecuritySettings from "@/components/myComponents/SecuritySettings";
-import { AnimatePresence, motion } from "framer-motion"
+import { motion } from "framer-motion"
 import { Plus, Search } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";

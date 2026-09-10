@@ -49,7 +49,7 @@ const Navigations = () => {
                                 />
                             )}
 
-                            <Icon height={18} width={18} />
+                            <Icon height={18} width={18} className='cursor-none' />
                             <p className='hidden md:flex'>
                                 {item.title}
                             </p>
@@ -61,7 +61,7 @@ const Navigations = () => {
             <BlurFade delay={0.05 + navItems.length * 0.05} inView>
                 <li
                     onMouseEnter={() => setHoveredId(99)}
-                    className="relative flex px-3 py-2 gap-2 rounded-sm items-center text-muted-foreground transition-colors duration-200 sm:w-full cursor-pointer select-none z-10 hover:text-accent-foreground"
+                    className="relative flex px-3 py-2 gap-2 rounded-sm items-center text-muted-foreground transition-colors duration-200 sm:w-full select-none z-10 hover:text-accent-foreground"
                     onClick={(e) => toggleTheme(e)}
                 >
                     {hoveredId === 99 && (

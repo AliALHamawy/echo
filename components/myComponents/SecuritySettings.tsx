@@ -1,4 +1,3 @@
-import React from 'react'
 import SettibgCard from '@/components/myComponents/SettibgCard'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
