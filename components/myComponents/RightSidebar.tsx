@@ -15,7 +15,7 @@ export default function RightSidebar() {
     return (
         <aside className="hidden xl:flex flex-col w-72 shrink-0 p-5 border-s border-border overflow-y-auto no-scrollbar">
             <div className="flex flex-col justify-start w-full gap-4">
-                <SearchBar />
+                <SearchBar out={true} />
                 <FollowingCard />
                 <TrendingCard />
                 <span className="text-muted-foreground text-[12px]">
