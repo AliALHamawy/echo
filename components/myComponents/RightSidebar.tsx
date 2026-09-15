@@ -8,7 +8,7 @@ import TrendingCard from "@/components/myComponents/TrendingCard";
 
 export default function RightSidebar() {
     const pathname = usePathname();
-    const isPage = pathname === "/" || pathname === "/profile";
+    const isPage = pathname === "/" || pathname === "/profile" || pathname === "/search";
 
     if (!isPage) return null;
 

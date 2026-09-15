@@ -2,6 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import Logo from "@/components/myComponents/Logo";
+import Link from "next/link";
+import { Search } from "lucide-react";
 
 const pageTitles: Record<string, string> = {
     "/": "Feeds",
@@ -36,8 +38,9 @@ export default function LayoutHeader() {
                 </h1>
             )}
             {showMobileHeader && (
-                <h1 className="border-b h-15 shrink-0 sm:hidden flex items-center pl-5">
+                <h1 className="border-b h-15 shrink-0 sm:hidden flex items-center px-5 justify-between w-full">
                     <Logo myClassName="flex" />
+                    <Link href="/mobileSearch" className=""><Search className="h-6 w-6 p-1 hover:bg-muted transition-all duration-300"/></Link>
                 </h1>
             )}
         </>

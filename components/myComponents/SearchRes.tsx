@@ -45,7 +45,7 @@ const SearchRes = () => {
             <div className="flex flex-col gap-3 w-full items-start">
                 {mockUsers.map((item) => (
                     <div key={item.id} className="flex items-center gap-2">
-                        <Avatar className="w-10 h-10">
+                        <Avatar className="w-13 h-13">
                             <AvatarImage src={item.avatar} alt={item.name} />
                             <AvatarFallback>{item.name.slice(0, 2)}</AvatarFallback>
                         </Avatar>
