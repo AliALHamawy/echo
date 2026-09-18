@@ -1,9 +1,20 @@
+"use client"
+
 import SettibgCard from '@/components/myComponents/SettibgCard'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
+import { pb } from '@/lib/pocketbase'
+import { useRouter } from 'next/navigation'
 
 const SecuritySettings = () => {
+  const router = useRouter()
+
+  const handleSignOut = () => {
+    pb.authStore.clear()
+    router.replace('/auth')
+  }
+
   return (
     <>
       <div className="flex flex-col w-full border border-muted divide-y">
@@ -17,7 +28,7 @@ const SecuritySettings = () => {
       <span className="text-xs uppercase text-muted-foreground m-0 p-0 ">Session</span>
       <div className="flex flex-col w-full border border-muted divide-y">
         <SettibgCard labelHeading="Sign out" labelDescription='Sign out of Echo on this device.'>
-          <Button className='w-fit p-2 rounded-none text-xs bg-transparent text-foreground hover:bg-foreground/10 hover:text-foreground/80 border border-foreground/20'><LogOut />Sign out</Button>
+          <Button type='button' onClick={handleSignOut} className='w-fit p-2 rounded-none text-xs bg-transparent text-foreground hover:bg-foreground/10 hover:text-foreground/80 border border-foreground/20'><LogOut />Sign out</Button>
         </SettibgCard>
       </div>
       <span className="text-xs uppercase text-muted-foreground m-0 p-0 ">Danger zone</span>

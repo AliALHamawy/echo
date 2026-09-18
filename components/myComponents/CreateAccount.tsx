@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useState } from "react"
 import { cn } from "cn"
 import Link from "next/link"
+import { pb } from "@/lib/pocketbase"
 
 
 const CreateAccount = () => {
@@ -22,6 +23,9 @@ const CreateAccount = () => {
         pass: "",
         confPass: "",
     })
+    const [error, setError] = useState("")
+    const [success, setSuccess] = useState("")
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target
@@ -29,12 +33,43 @@ const CreateAccount = () => {
     }
 
     const isFormFilled = formData.user.trim() !== "" && formData.pass.trim() !== ""
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setError("")
+        setSuccess("")
+
+        if (formData.pass !== formData.confPass) {
+            setError("Passwords do not match.")
+            return
+        }
+
+        setIsSubmitting(true)
+
+        try {
+            await pb.collection("users").create({
+                name: formData.name,
+                userName: formData.user,
+                email: formData.email,
+                password: formData.pass,
+                passwordConfirm: formData.confPass,
+                emailVisibility: true,
+            })
+            setSuccess("Account created. You can now sign in.")
+            setFormData({ name: "", user: "", email: "", pass: "", confPass: "" })
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Unable to create your account.")
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
     return (
         <>
             <div className="flex flex-col items-start w-full">
                 <FormHeading heading="Create your account" description="A few details and you're in." />
 
-                <form action="" className="flex flex-col w-full gap-3 items-start-text-start">
+                <form onSubmit={handleSubmit} className="flex flex-col w-full gap-3 items-start-text-start">
 
                     <CustomInput
                         id="name"
@@ -44,6 +79,7 @@ const CreateAccount = () => {
                         icon={User}
                         onChange={handleChange}
                         value={formData.name}
+                        required
                     />
                     <CustomInput
                         id="user"
@@ -53,6 +89,7 @@ const CreateAccount = () => {
                         icon={AtSign}
                         onChange={handleChange}
                         value={formData.user}
+                        required
                     />
                     <CustomInput
                         id="email"
@@ -62,6 +99,7 @@ const CreateAccount = () => {
                         icon={Mail}
                         onChange={handleChange}
                         value={formData.email}
+                        required
                     />
                     <CustomInput
                         id="pass"
@@ -71,6 +109,7 @@ const CreateAccount = () => {
                         icon={Lock}
                         onChange={handleChange}
                         value={formData.pass}
+                        required
                     />
                     <CustomInput
                         id="confPass"
@@ -80,6 +119,7 @@ const CreateAccount = () => {
                         icon={Lock}
                         onChange={handleChange}
                         value={formData.confPass}
+                        required
                     />
                     <div className="flex justify-between items-center">
 
@@ -88,7 +128,9 @@ const CreateAccount = () => {
                             <label htmlFor="remember" className="text-muted-foreground">I agree to the <Link className="border-b border-foreground text-foreground" href="/terms">Terms</Link> and <Link className="border-b border-foreground text-foreground" href="/privacyPolicy">Privacy Policy</Link>.</label>
                         </div>
                     </div>
-                    <button className={cn(isFormFilled ?
+                    {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
+                    {success && <p className="text-sm text-green-600" role="status">{success}</p>}
+                    <button type="submit" disabled={!isFormFilled || isSubmitting} className={cn(isFormFilled && !isSubmitting ?
                         "w-full text-background inline-flex text-center items-center justify-center font-medium p-1 bg-foreground/90"
                         :
                         "w-full text-background inline-flex text-center items-center justify-center font-medium p-1 bg-muted-foreground/90")}>Create Account</button>

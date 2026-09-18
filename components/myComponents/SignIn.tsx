@@ -6,8 +6,11 @@ import GoogleGithub from "./GoogleGithub"
 import FormHeading from "./FormHeading"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { pb } from "@/lib/pocketbase"
+import { useRouter } from "next/navigation"
 
 const SignIn = () => {
+    const router = useRouter()
     const [formData, setFormData] = useState<{
         user: string
         pass: string
@@ -15,6 +18,8 @@ const SignIn = () => {
         user: "",
         pass: "",
     })
+    const [error, setError] = useState("")
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target
@@ -23,13 +28,28 @@ const SignIn = () => {
 
     const isFormFilled = formData.user.trim() !== "" && formData.pass.trim() !== ""
 
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setError("")
+        setIsSubmitting(true)
+
+        try {
+            await pb.collection("users").authWithPassword(formData.user, formData.pass)
+            router.push("/")
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Unable to sign in.")
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
     return (
         <>
             <div className="flex flex-col items-start w-full">
 
                 <FormHeading heading="Welcome back" description="Sign in to pick up where you left off." />
 
-                <form action="" className="flex flex-col w-full gap-3 items-start-text-start">
+                <form onSubmit={handleSubmit} className="flex flex-col w-full gap-3 items-start-text-start">
 
                     <CustomInput
                         id="user"
@@ -57,7 +77,8 @@ const SignIn = () => {
                         </div>
                         <span className="text-sm border-b-2 border-transparent transition-all duration-100 hover:border-primary">Forgot password?</span>
                     </div>
-                    <button className={cn(isFormFilled ?
+                    {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
+                    <button type="submit" disabled={!isFormFilled || isSubmitting} className={cn(isFormFilled && !isSubmitting ?
                         "w-full text-background inline-flex text-center items-center justify-center font-medium p-1 bg-foreground/90"
                         :
                         "w-full text-background inline-flex text-center items-center justify-center font-medium p-1 bg-muted-foreground/90")}>Sign In</button>

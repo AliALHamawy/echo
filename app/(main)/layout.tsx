@@ -5,6 +5,7 @@ import Navigations from "@/components/myComponents/Navigations";
 import LayoutHeader from "@/components/myComponents/LayoutHeader";
 import RightSidebar from "@/components/myComponents/RightSidebar";
 import SearchPopup from "@/components/myComponents/SearchPopup";
+import AuthGuard from "@/components/myComponents/AuthGuard";
 
 export default function MainLayout({
     children,
@@ -12,7 +13,8 @@ export default function MainLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div>
+        <AuthGuard>
+            <div>
 
             <div className="flex w-full max-w-350 mx-auto h-dvh overflow-hidden relative">
                 <MobileNav />
@@ -37,6 +39,7 @@ export default function MainLayout({
                 <RightSidebar />
             </div>
             <SearchPopup />
-        </div>
+            </div>
+        </AuthGuard>
     );
 }
