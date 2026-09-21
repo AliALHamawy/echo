@@ -9,9 +9,10 @@ interface MessageHeaderProps {
     lastSeen: string;
     avtarImage: string;
     avatarFallback: string;
+    profileUserId?: string;
 }
 
-const MessageHeader = ({ name, username, lastSeen, avtarImage, avatarFallback }: MessageHeaderProps) => {
+const MessageHeader = ({ name, username, lastSeen, avtarImage, avatarFallback, profileUserId }: MessageHeaderProps) => {
     return (
         <>
             <div className="head border-b border-border p-3 py-4 flex items-center justify-between w-full bg-background z-50">
@@ -39,9 +40,14 @@ const MessageHeader = ({ name, username, lastSeen, avtarImage, avatarFallback }:
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-none w-40">
-                            <DropdownMenuItem className="justify-between rounded-none">
-                                View Profile
-                                <User className="size-4" />
+                            <DropdownMenuItem className="rounded-none p-0" asChild>
+                                <Link
+                                    href={profileUserId ? `/profile/${profileUserId}` : "/profile"}
+                                    className="flex w-full items-center justify-between px-2 py-1.5"
+                                >
+                                    View Profile
+                                    <User className="size-4" />
+                                </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem className="justify-between rounded-none">
                                 Mute

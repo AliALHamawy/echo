@@ -1,24 +1,23 @@
 "use client"
 import FormHeading from "@/components/myComponents/FormHeading"
 import CustomInput from "@/components/myComponents/CustomInput"
-import { Mail, Lock, User, AtSign } from "lucide-react"
+import { Mail, Lock, User } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useState } from "react"
 import { cn } from "cn"
 import Link from "next/link"
 import { pb } from "@/lib/pocketbase"
+import AuthAlert from "@/components/myComponents/AuthAlert"
 
 
 const CreateAccount = () => {
     const [formData, setFormData] = useState<{
         name: string
-        user: string
         email: string
         pass: string
         confPass: string
     }>({
         name: "",
-        user: "",
         email: "",
         pass: "",
         confPass: "",
@@ -32,7 +31,19 @@ const CreateAccount = () => {
         setFormData((prev) => ({ ...prev, [id]: value }))
     }
 
-    const isFormFilled = formData.user.trim() !== "" && formData.pass.trim() !== ""
+    const isFormFilled = formData.email.trim() !== "" && formData.pass.trim() !== ""
+
+    const generateUsername = (name: string) => {
+        const namePart = name
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "")
+            .slice(0, 24)
+        const randomPart = crypto.randomUUID().replaceAll("-", "").slice(0, 6)
+
+        return `${namePart || "user"}-${randomPart}`
+    }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -47,16 +58,18 @@ const CreateAccount = () => {
         setIsSubmitting(true)
 
         try {
+            const userName = generateUsername(formData.name)
+
             await pb.collection("users").create({
                 name: formData.name,
-                userName: formData.user,
+                userName,
                 email: formData.email,
                 password: formData.pass,
                 passwordConfirm: formData.confPass,
                 emailVisibility: true,
             })
             setSuccess("Account created. You can now sign in.")
-            setFormData({ name: "", user: "", email: "", pass: "", confPass: "" })
+            setFormData({ name: "", email: "", pass: "", confPass: "" })
         } catch (err) {
             setError(err instanceof Error ? err.message : "Unable to create your account.")
         } finally {
@@ -79,16 +92,6 @@ const CreateAccount = () => {
                         icon={User}
                         onChange={handleChange}
                         value={formData.name}
-                        required
-                    />
-                    <CustomInput
-                        id="user"
-                        label="Username"
-                        type="text"
-                        placeholder="ali"
-                        icon={AtSign}
-                        onChange={handleChange}
-                        value={formData.user}
                         required
                     />
                     <CustomInput
@@ -128,14 +131,14 @@ const CreateAccount = () => {
                             <label htmlFor="remember" className="text-muted-foreground">I agree to the <Link className="border-b border-foreground text-foreground" href="/terms">Terms</Link> and <Link className="border-b border-foreground text-foreground" href="/privacyPolicy">Privacy Policy</Link>.</label>
                         </div>
                     </div>
-                    {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
-                    {success && <p className="text-sm text-green-600" role="status">{success}</p>}
                     <button type="submit" disabled={!isFormFilled || isSubmitting} className={cn(isFormFilled && !isSubmitting ?
                         "w-full text-background inline-flex text-center items-center justify-center font-medium p-1 bg-foreground/90"
                         :
                         "w-full text-background inline-flex text-center items-center justify-center font-medium p-1 bg-muted-foreground/90")}>Create Account</button>
 
                 </form>
+                {error && <AuthAlert message={error} variant="error" />}
+                {success && <AuthAlert message={success} variant="success" />}
             </div>
         </>
     )

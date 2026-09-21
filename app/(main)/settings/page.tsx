@@ -4,14 +4,101 @@ import GeneralSettings from "@/components/myComponents/GeneralSettings";
 import NotificationsSettings from "@/components/myComponents/NotificationsSettings";
 import SecuritySettings from "@/components/myComponents/SecuritySettings";
 import { Button } from "@/components/ui/button";
+import { pb } from "@/lib/pocketbase";
+import { applyTheme, type ThemePreference } from "@/lib/theme";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { twMerge } from 'tailwind-merge';
 
 type FilterTab = "General" | "Apperance" | "Notifications" | "Security";
 
+type SettingsState = {
+  accountPrivacy: string
+  followRequests: string
+  country: string
+  theme: string
+  reducedMotion: boolean
+  compactFeed: boolean
+  notifications: {
+    enabled: boolean
+    messages: boolean
+    mentions: boolean
+    comments: boolean
+    interactions: boolean
+  }
+}
+
+const defaultSettings: SettingsState = {
+  accountPrivacy: "public",
+  followRequests: "direct_follow",
+  country: "US",
+  theme: "dark",
+  reducedMotion: false,
+  compactFeed: false,
+  notifications: {
+    enabled: true,
+    messages: true,
+    mentions: true,
+    comments: true,
+    interactions: true,
+  },
+}
+
 const Settings = () => {
   const [tab, setTab] = useState<FilterTab>("General");
+  const [settings, setSettings] = useState<SettingsState>(defaultSettings);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      await Promise.resolve();
+      const userSettings = pb.authStore.record?.settings as Partial<SettingsState> | undefined;
+      setSettings({
+        ...defaultSettings,
+        ...userSettings,
+        notifications: {
+          ...defaultSettings.notifications,
+          ...userSettings?.notifications,
+        },
+      });
+      setIsLoading(false);
+    };
+
+    void loadSettings();
+  }, []);
+
+  const updateSetting = <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => {
+    setSettings((current) => ({ ...current, [key]: value }));
+    if (key === "theme") {
+      applyTheme(value as ThemePreference);
+    }
+    setSaved(false);
+  };
+
+  const saveSettings = async () => {
+    const user = pb.authStore.record;
+    if (!user) {
+      setError("You must be signed in to save settings.");
+      return;
+    }
+
+    setError("");
+    setSaved(false);
+    setIsSaving(true);
+
+    try {
+      const updatedUser = await pb.collection("users").update(user.id, { settings });
+      pb.authStore.save(pb.authStore.token, updatedUser);
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to save settings.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <>
@@ -52,19 +139,44 @@ const Settings = () => {
               );
             })}
           </div>
-          <AnimatePresence mode="wait">
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading settings...</p>
+          ) : <AnimatePresence mode="wait">
             <span className="text-xs uppercase text-muted-foreground m-0 p-0 ">{tab}</span>
             {tab === "Security" ?( <SecuritySettings key="security" />):(
   <div className="flex flex-col w-full border border-muted" key="settings">
               <motion.div className="flex flex-col w-full divide-y divide-border">
-                {tab === "General" && <GeneralSettings />}
-                {tab === "Apperance" && <ApperanceSettings />}
-                {tab === "Notifications" && <NotificationsSettings />}
-                <Button className="w-25 m-3 rounded-none self-end text-xs">Save changes</Button>
+                {tab === "General" && <GeneralSettings
+                  accountPrivacy={settings.accountPrivacy}
+                  followRequests={settings.followRequests}
+                  country={settings.country}
+                  onAccountPrivacyChange={(value) => updateSetting("accountPrivacy", value)}
+                  onFollowRequestsChange={(value) => updateSetting("followRequests", value)}
+                  onCountryChange={(value) => updateSetting("country", value)}
+                />}
+                {tab === "Apperance" && <ApperanceSettings
+                  theme={settings.theme}
+                  reducedMotion={settings.reducedMotion}
+                  compactFeed={settings.compactFeed}
+                  onThemeChange={(value) => updateSetting("theme", value)}
+                  onReducedMotionChange={(value) => updateSetting("reducedMotion", value)}
+                  onCompactFeedChange={(value) => updateSetting("compactFeed", value)}
+                />}
+                {tab === "Notifications" && <NotificationsSettings
+                  notifications={settings.notifications}
+                  onChange={(key, value) => updateSetting("notifications", { ...settings.notifications, [key]: value })}
+                />}
+                <div className="flex items-center justify-end gap-3 m-3">
+                  {saved && <span className="text-xs text-muted-foreground">Saved</span>}
+                  <Button onClick={() => void saveSettings()} disabled={isSaving} className="w-25 rounded-none text-xs">
+                    {isSaving ? "Saving..." : "Save changes"}
+                  </Button>
+                </div>
               </motion.div>
             </div>
 )}
-          </AnimatePresence>
+          </AnimatePresence>}
+          {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
       </div>
     </>

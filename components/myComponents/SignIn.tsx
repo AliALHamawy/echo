@@ -8,6 +8,8 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { pb } from "@/lib/pocketbase"
 import { useRouter } from "next/navigation"
+import AuthAlert from "@/components/myComponents/AuthAlert"
+import Link from "next/link"
 
 const SignIn = () => {
     const router = useRouter()
@@ -75,9 +77,10 @@ const SignIn = () => {
                             <Checkbox id="remember" name="Remember" />
                             <label htmlFor="remember" className="text-muted-foreground">Remember me</label>
                         </div>
-                        <span className="text-sm border-b-2 border-transparent transition-all duration-100 hover:border-primary">Forgot password?</span>
+                        <Link href="/auth/forgot-password" className="text-sm border-b-2 border-transparent transition-all duration-100 hover:border-primary">
+                            Forgot password?
+                        </Link>
                     </div>
-                    {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
                     <button type="submit" disabled={!isFormFilled || isSubmitting} className={cn(isFormFilled && !isSubmitting ?
                         "w-full text-background inline-flex text-center items-center justify-center font-medium p-1 bg-foreground/90"
                         :
@@ -91,6 +94,7 @@ const SignIn = () => {
                 </div>
 
                 <GoogleGithub />
+                {error && <AuthAlert message={error} variant="error" />}
 
             </div>
         </>

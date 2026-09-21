@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/app/globals.css";
 import { SmoothCursor } from "@/components/ui/smooth-cursor";
+import ThemeSync from "@/components/myComponents/ThemeSync";
 import { StoreProvider } from "@/store/provider";
 
 const geistSans = Geist({
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <SmoothCursor />
+        <ThemeSync />
         <StoreProvider>
         {children}
         </StoreProvider>

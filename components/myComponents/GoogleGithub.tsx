@@ -4,20 +4,71 @@
 import { pb } from "@/lib/pocketbase"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import AuthAlert from "@/components/myComponents/AuthAlert"
 
 const GoogleGithub = () => {
   const router = useRouter()
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState<"google" | "github" | null>(null)
 
+  const getErrorMessage = (error: unknown, provider: string) => {
+    if (error && typeof error === "object" && "response" in error) {
+      const response = (error as { response?: { message?: string; data?: { message?: string } } }).response
+      return response?.message || response?.data?.message || `Unable to connect with ${provider}.`
+    }
+
+    return error instanceof Error ? error.message : `Unable to connect with ${provider}.`
+  }
+
+  const generateUsername = (value: string) => {
+    const namePart = value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 24)
+
+    return `${namePart || "user"}-${crypto.randomUUID().replaceAll("-", "").slice(0, 6)}`
+  }
+
   const handleOAuth = (provider: "google" | "github") => {
     setError("")
     setIsLoading(provider)
 
-    pb.collection("users").authWithOAuth2({ provider })
-      .then(() => router.push("/"))
+    const oauthWindow = window.open("about:blank", "echo-oauth", "popup,width=500,height=700")
+
+    if (!oauthWindow) {
+      setError("Your browser blocked the Google/GitHub sign-in popup. Allow popups for this site and try again.")
+      setIsLoading(null)
+      return
+    }
+
+    pb.collection("users").authWithOAuth2({
+      provider,
+      urlCallback: (url) => {
+        oauthWindow.location.href = url
+      },
+    })
+      .then(async (authData) => {
+        const record = authData.record as typeof authData.record & {
+          userName?: string
+          username?: string
+          name?: string
+          email?: string
+        }
+        const currentUsername = record.userName || record.username
+
+        if (!currentUsername) {
+          const username = generateUsername(record.name || record.email || provider)
+          const updatedRecord = await pb.collection("users").update(record.id, { userName: username })
+          pb.authStore.save(pb.authStore.token, updatedRecord)
+        }
+
+        router.push("/")
+      })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : `Unable to sign in with ${provider}.`)
+        setError(getErrorMessage(err, provider))
+        oauthWindow.close()
       })
       .finally(() => setIsLoading(null))
   }
@@ -48,7 +99,7 @@ const GoogleGithub = () => {
           {isLoading === "github" ? "Connecting..." : "GitHub"}
         </button>
       </div>
-      {error && <p className="mt-2 text-center text-sm text-destructive" role="alert">{error}</p>}
+      {error && <AuthAlert message={error} variant="error" />}
     </>
   )
 }

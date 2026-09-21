@@ -1,164 +1,229 @@
-import { ChatConversation } from "@/types/chat";
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { pb } from "@/lib/pocketbase";
 import MessageHeader from "@/components/myComponents/MessageHeader";
 import MessageList from "@/components/myComponents/MessageList";
 import MessageInput from "@/components/myComponents/MessageInput";
-
-export const MOCK_CHAT_DATA: ChatConversation = {
-    user: {
-        id: "user-ada",
-        name: "Ada Vinter",
-        username: "@ada_vinter",
-        avatarUrl: "",
-        initials: "AV",
-        isOnline: true,
-    },
-    messages: [
-        {
-            date: "Yesterday",
-            items: [
-                {
-                    id: "msg-1",
-                    senderId: "other",
-                    type: "text",
-                    text: "Morning! I pushed the monochrome token set last night.",
-                    timestamp: "09:12 AM",
-                },
-                {
-                    id: "msg-2",
-                    senderId: "user",
-                    type: "text",
-                    text: "Nice! Checking it out now.",
-                    timestamp: "09:14 AM",
-                    status: "read",
-                },
-                {
-                    id: "msg-3",
-                    senderId: "user",
-                    type: "text",
-                    text: "Did you keep the accent color for destructive actions only?",
-                    timestamp: "09:15 AM",
-                    status: "read",
-                },
-                {
-                    id: "msg-4",
-                    senderId: "other",
-                    type: "code",
-                    text: "Yes, exactly. Here is how the CSS variables look now:",
-                    codeSnippet: "--destructive: oklch(0.577 0.245 27.325);\n--accent: var(--muted);",
-                    timestamp: "09:16 AM",
-                },
-                {
-                    id: "msg-5",
-                    senderId: "other",
-                    type: "text",
-                    text: "Let me know if you need me to adjust the contrast for dark mode.",
-                    timestamp: "09:17 AM",
-                },
-            ],
-        },
-        {
-            date: "Today",
-            items: [
-                {
-                    id: "msg-6",
-                    senderId: "user",
-                    type: "text",
-                    text: "I reviewed the changes on local setup.",
-                    timestamp: "10:02 AM",
-                    status: "read",
-                },
-                {
-                    id: "msg-7",
-                    senderId: "user",
-                    type: "text",
-                    text: "The contrast in dark mode looks super clean.",
-                    timestamp: "10:03 AM",
-                    status: "read",
-                },
-                {
-                    id: "msg-8",
-                    senderId: "user",
-                    type: "text",
-                    text: "That reads so much faster now. Ship it!",
-                    timestamp: "10:05 AM",
-                    status: "read",
-                },
-                {
-                    id: "msg-9",
-                    senderId: "other",
-                    type: "link",
-                    text: "Awesome! The deployment just finished, here is the preview link:",
-                    linkData: {
-                        url: "https://staging.echo.app",
-                        title: "Design tokens — staging preview",
-                        description: "Live preview of the rewritten token layer with light and dark themes.",
-                    },
-                    timestamp: "10:08 AM",
-                },
-                {
-                    id: "msg-10",
-                    senderId: "other",
-                    type: "text",
-                    text: "Can you test the mobile layout when you have a minute?",
-                    timestamp: "10:09 AM",
-                },
-                {
-                    id: "msg-11",
-                    senderId: "user",
-                    type: "text",
-                    text: "On it right now 👍",
-                    timestamp: "10:12 AM",
-                    status: "delivered",
-                },
-                {
-                    id: "msg-12",
-                    senderId: "user",
-                    type: "text",
-                    text: "Testing on iOS Safari and Android Chrome.",
-                    timestamp: "10:13 AM",
-                    status: "delivered",
-                },
-                {
-                    id: "msg-13",
-                    senderId: "user",
-                    type: "text",
-                    text: "Everything looks pixel-perfect! Ready for production merge.",
-                    timestamp: "10:15 AM",
-                    status: "sent",
-                },
-            ],
-        },
-    ],
-};
+import { ChatConversation } from "@/types/chat";
+import {
+    fetchThreadMessages,
+    getInitials,
+    getUserAvatarUrl,
+    groupMessagesByDate,
+    mapMessageRecord,
+    markThreadAsRead,
+    messageInvolvesThread,
+    sendThreadMessage,
+    type MessageRecord,
+} from "@/lib/messages";
 
 const Page = () => {
+    const searchParams = useSearchParams();
+    const peerUserId = searchParams.get("userId");
+    const [currentUserId, setCurrentUserId] = useState(() => pb.authStore.record?.id ?? "");
+    const [otherUser, setOtherUser] = useState<any>(null);
+    const [messages, setMessages] = useState<ChatConversation["messages"]>([]);
+    const [isSending, setIsSending] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [sendError, setSendError] = useState("");
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const currentUser = pb.authStore.record;
+
+    useEffect(() => {
+        const syncAuth = () => {
+            setCurrentUserId(pb.authStore.record?.id ?? "");
+        };
+
+        syncAuth();
+        return pb.authStore.onChange(syncAuth);
+    }, []);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    const loadConversation = useCallback(async () => {
+        const authUserId = pb.authStore.record?.id;
+
+        if (!authUserId) {
+            setOtherUser(null);
+            setMessages([]);
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        setSendError("");
+
+        try {
+            let targetUser = null as any;
+
+            if (peerUserId) {
+                targetUser = await pb.collection("users").getOne(peerUserId, { requestKey: null }).catch(() => null);
+            }
+
+            if (!targetUser) {
+                const users = await pb
+                    .collection("users")
+                    .getFullList({
+                        filter: `id != "${authUserId}"`,
+                        sort: "-updated",
+                        requestKey: null,
+                    })
+                    .catch(() => []);
+                targetUser = users[0] ?? null;
+            }
+
+            setOtherUser(targetUser);
+
+            if (!targetUser) {
+                setMessages([]);
+                return;
+            }
+
+            const records = await fetchThreadMessages(authUserId, targetUser.id).catch(() => []);
+            setMessages(groupMessagesByDate(records, authUserId));
+            await markThreadAsRead(authUserId, targetUser.id);
+        } catch {
+            setMessages([]);
+            setOtherUser(null);
+        } finally {
+            setLoading(false);
+        }
+    }, [peerUserId]);
+
+    useEffect(() => {
+        void loadConversation();
+    }, [loadConversation, currentUserId]);
+
+    useEffect(() => {
+        if (!loading) {
+            scrollToBottom();
+        }
+    }, [loading, messages]);
+
+    useEffect(() => {
+        const authUserId = pb.authStore.record?.id;
+        const otherUserId = otherUser?.id;
+
+        if (!authUserId || !otherUserId) return;
+
+        let active = true;
+        let unsubscribe: (() => void) | null = null;
+
+        void pb.collection("messages").subscribe("*", (event) => {
+            const record = event.record as MessageRecord;
+            if (!messageInvolvesThread(record, authUserId, otherUserId)) return;
+
+            void (async () => {
+                const records = await fetchThreadMessages(authUserId, otherUserId).catch(() => []);
+                setMessages(groupMessagesByDate(records, authUserId));
+
+                if (record.recipient === authUserId) {
+                    await markThreadAsRead(authUserId, otherUserId);
+                }
+            })();
+        }).then((unsub) => {
+            if (active) {
+                unsubscribe = unsub;
+                return;
+            }
+            unsub();
+        });
+
+        return () => {
+            active = false;
+            unsubscribe?.();
+        };
+    }, [currentUserId, otherUser?.id]);
+
+    const handleSendMessage = async (value: string) => {
+        const authUserId = pb.authStore.record?.id;
+        if (!authUserId || !otherUser || !value.trim()) return;
+
+        setIsSending(true);
+        setSendError("");
+
+        try {
+            const record = await sendThreadMessage(authUserId, otherUser.id, value);
+            const newMessage = mapMessageRecord(record, authUserId);
+
+            setMessages((previous) => {
+                if (!previous.length) {
+                    return [{ date: "Today", items: [newMessage] }];
+                }
+
+                const next = [...previous];
+                const latestGroup = next[next.length - 1];
+                if (latestGroup.date === "Today") {
+                    latestGroup.items = [...latestGroup.items, newMessage];
+                    return next;
+                }
+
+                return [...next, { date: "Today", items: [newMessage] }];
+            });
+        } catch (error) {
+            console.error("Failed to send message", error);
+            setSendError("Message could not be sent. Try again.");
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    const otherUserName = otherUser?.name || otherUser?.username || "Echo user";
+    const otherUserUsername = otherUser?.username ? `@${otherUser.username}` : "";
+    const otherUserAvatar = getUserAvatarUrl(otherUser);
+    const otherUserInitials = getInitials(otherUserName);
+    const currentUserAvatar = getUserAvatarUrl(currentUser);
+    const currentUserInitials = getInitials(currentUser?.name || currentUser?.username || "Me");
+    const hasMessages = messages.some((group) => group.items.length > 0);
+
     return (
-        /* التعديل 1: استخدام h-full بدلاً من h-[100dvh] لأن الـ Layout يمتلك الارتفاع كاملاً */
         <div className="flex flex-col h-full w-full overflow-hidden justify-between relative">
-            {/* Header */}
             <div className="shrink-0">
                 <MessageHeader
-                    name={MOCK_CHAT_DATA.user.name}
-                    username={MOCK_CHAT_DATA.user.username}
-                    lastSeen={MOCK_CHAT_DATA.user.lastSeen || ""}
-                    avtarImage={MOCK_CHAT_DATA.user.avatarUrl}
-                    avatarFallback={MOCK_CHAT_DATA.user.initials.slice(0, 2).toUpperCase()}
+                    name={otherUserName}
+                    username={otherUserUsername}
+                    lastSeen={otherUser?.isOnline ? "Online now" : "Active recently"}
+                    avtarImage={otherUserAvatar}
+                    avatarFallback={otherUserInitials}
+                    profileUserId={otherUser?.id}
                 />
             </div>
 
-            {/* List */}
-            {/* التعديل 2: إضافة كلاس no-scrollbar هنا لإخفاء شريط التمرير الأبيض */}
             <div className="flex-1 overflow-y-auto no-scrollbar min-h-0 w-full">
-                <MessageList
-                    otherUserAvatar={MOCK_CHAT_DATA.user.avatarUrl}
-                    otherUserInitials={MOCK_CHAT_DATA.user.initials.slice(0, 2).toUpperCase()}
-                    messages={MOCK_CHAT_DATA.messages}
-                />
+                {loading ? (
+                    <div className="p-6 text-sm text-muted-foreground">Loading conversation...</div>
+                ) : !otherUser ? (
+                    <div className="p-6 text-sm text-muted-foreground">No user found to message.</div>
+                ) : (
+                    <>
+                        {!hasMessages && (
+                            <div className="p-6 text-center text-sm text-muted-foreground">
+                                No messages yet. Say hello to {otherUserName}.
+                            </div>
+                        )}
+                        <MessageList
+                            otherUserAvatar={otherUserAvatar}
+                            otherUserInitials={otherUserInitials}
+                            currentUserId={currentUserId || "user"}
+                            currentUserAvatar={currentUserAvatar}
+                            currentUserInitials={currentUserInitials}
+                            messages={messages}
+                        />
+                        <div ref={messagesEndRef} />
+                    </>
+                )}
             </div>
 
-            {/* Input */}
             <div className="shrink-0">
-                <MessageInput />
+                {sendError ? (
+                    <p className="px-4 pb-1 text-xs text-destructive text-center">{sendError}</p>
+                ) : null}
+                <MessageInput onSend={handleSendMessage} disabled={isSending || !otherUser || !currentUserId} />
             </div>
         </div>
     );
