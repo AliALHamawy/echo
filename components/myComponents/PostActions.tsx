@@ -2,7 +2,7 @@
 
 import { Heart, MessageCircle, Repeat2 } from "lucide-react"
 import { useEffect, useState } from "react"
-import { pb } from "@/lib/pocketbase"
+import { backend } from "@/lib/backend"
 import { cn } from "@/lib/utils"
 
 interface PostActionsProps {
@@ -34,12 +34,12 @@ const PostActions = ({
     const [error, setError] = useState("")
 
     useEffect(() => {
-        const user = pb.authStore.record
+        const user = backend.authStore.record
         if (!user) return
 
         const loadInteractions = async () => {
             try {
-                const records = await pb.collection("post").getFullList<{
+                const records = await backend.collection("post").getFullList<{
                     postInteractions: string
                     author: string
                     kind: "like" | "repost"
@@ -58,7 +58,7 @@ const PostActions = ({
     }, [postId])
 
     const toggleInteraction = async (kind: "like" | "repost") => {
-        const user = pb.authStore.record
+        const user = backend.authStore.record
         if (!user || isBusy) return
 
         const isActive = kind === "like" ? liked : reposted
@@ -74,11 +74,11 @@ const PostActions = ({
 
         try {
             const filter = `postInteractions = "${postId}" && author = "${user.id}" && kind = "${kind}"`
-            const existing = await pb.collection("post").getFirstListItem(filter).catch(() => null)
+            const existing = await backend.collection("post").getFirstListItem(filter).catch(() => null)
             if (nextActive && !existing) {
-                await pb.collection("post").create({ postInteractions: postId, author: user.id, kind })
+                await backend.collection("post").create({ postInteractions: postId, author: user.id, kind })
             } else if (!nextActive && existing) {
-                await pb.collection("post").delete(existing.id)
+                await backend.collection("post").delete(existing.id)
             }
         } catch (interactionError) {
             setActive(isActive)

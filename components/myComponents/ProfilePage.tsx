@@ -2,12 +2,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Calendar, MoreHorizontal, Plus } from 'lucide-react'
-import { pb } from '@/lib/pocketbase'
+import { backend, type BackendRecord } from '@/lib/backend'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import QuickPost from '@/components/myComponents/QuickPost'
 import MyCard from '@/components/myComponents/MyCard'
 import { toPost, type Post } from '@/lib/posts'
-import type { RecordModel } from 'pocketbase'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -19,11 +18,11 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
   const [isComposerOpen, setIsComposerOpen] = useState(false)
   const [isFollowing, setIsFollowing] = useState(false)
   const [posts, setPosts] = useState<Post[]>([])
-  const currentUser = pb.authStore.record
+  const currentUser = backend.authStore.record
   const [followerCount, setFollowerCount] = useState(0)
   const [followingCount, setFollowingCount] = useState(0)
   const [isFollowBusy, setIsFollowBusy] = useState(false)
-  const [profileUser, setProfileUser] = useState<RecordModel | null>(null)
+  const [profileUser, setProfileUser] = useState<BackendRecord | null>(null)
   const user = profileUserId ? profileUser : currentUser
   const userId = user?.id
   const isOwnProfile = !profileUserId || profileUserId === currentUser?.id
@@ -34,15 +33,15 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
     const loadFollowData = async () => {
       try {
         const [followers, following] = await Promise.all([
-          pb.collection('follows').getList(1, 1, { filter: `following = "${userId}"`, requestKey: null }),
-          pb.collection('follows').getList(1, 1, { filter: `follower = "${userId}"`, requestKey: null }),
+          backend.collection('follows').getList(1, 1, { filter: `following = "${userId}"`, requestKey: null }),
+          backend.collection('follows').getList(1, 1, { filter: `follower = "${userId}"`, requestKey: null }),
         ])
 
         setFollowerCount(followers.totalItems)
         setFollowingCount(following.totalItems)
 
         if (!isOwnProfile && currentUser?.id) {
-          const relationship = await pb.collection('follows').getFirstListItem(
+          const relationship = await backend.collection('follows').getFirstListItem(
             `follower = "${currentUser.id}" && following = "${userId}"`,
             { requestKey: null }
           ).catch(() => null)
@@ -64,7 +63,7 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
 
     const loadProfileUser = async () => {
       try {
-        const record = await pb.collection('users').getOne(profileUserId, { requestKey: null })
+        const record = await backend.collection('users').getOne(profileUserId, { requestKey: null })
         setProfileUser(record)
       } catch {
         setProfileUser(null)
@@ -77,10 +76,10 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
   const name = user?.name || user?.username || user?.email || "Your account"
   const username = user?.username || user?.userName || "account"
   const avatar = user?.avatar && user?.collectionId
-    ? pb.files.getURL(user, user.avatar)
+    ? backend.files.getURL(user, user.avatar)
     : undefined
   const cover = user?.cover && user?.collectionId
-    ? pb.files.getURL(user, user.cover)
+    ? backend.files.getURL(user, user.cover)
     : undefined
   const bio = user?.bio || "Welcome to your Echo profile. Share what is on your mind and stay connected with your conversations."
   const joinedDate = user?.created
@@ -94,14 +93,14 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
     setIsFollowBusy(true)
     try {
       const filter = `follower = "${currentUser.id}" && following = "${profileUserId}"`
-      const relationship = await pb.collection('follows').getFirstListItem(filter, { requestKey: null }).catch(() => null)
+      const relationship = await backend.collection('follows').getFirstListItem(filter, { requestKey: null }).catch(() => null)
 
       if (relationship) {
-        await pb.collection('follows').delete(relationship.id)
+        await backend.collection('follows').delete(relationship.id)
         setIsFollowing(false)
         setFollowerCount((count) => Math.max(0, count - 1))
       } else {
-        await pb.collection('follows').create({ follower: currentUser.id, following: profileUserId })
+        await backend.collection('follows').create({ follower: currentUser.id, following: profileUserId })
         setIsFollowing(true)
         setFollowerCount((count) => count + 1)
       }
@@ -112,7 +111,7 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
 
   const loadPosts = useCallback(async () => {
     if (!userId) return
-    const records = await pb.collection('posts').getFullList({
+    const records = await backend.collection('posts').getFullList({
       filter: `author = "${userId}"`,
       sort: '-created',
       expand: 'author',

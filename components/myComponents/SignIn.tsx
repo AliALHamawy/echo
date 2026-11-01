@@ -6,7 +6,7 @@ import GoogleGithub from "./GoogleGithub"
 import FormHeading from "./FormHeading"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { pb } from "@/lib/pocketbase"
+import { createSupabaseBrowserClient } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import AuthAlert from "@/components/myComponents/AuthAlert"
 import Link from "next/link"
@@ -36,7 +36,12 @@ const SignIn = () => {
         setIsSubmitting(true)
 
         try {
-            await pb.collection("users").authWithPassword(formData.user, formData.pass)
+            const supabase = createSupabaseBrowserClient()
+            const { error } = await supabase.auth.signInWithPassword({
+                email: formData.user.trim(),
+                password: formData.pass,
+            })
+            if (error) throw error
             router.push("/")
         } catch (err) {
             setError(err instanceof Error ? err.message : "Unable to sign in.")

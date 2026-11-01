@@ -1,13 +1,11 @@
 
 "use client"
 
-import { pb } from "@/lib/pocketbase"
-import { useRouter } from "next/navigation"
+import { createSupabaseBrowserClient } from "@/lib/supabase"
 import { useState } from "react"
 import AuthAlert from "@/components/myComponents/AuthAlert"
 
 const GoogleGithub = () => {
-  const router = useRouter()
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState<"google" | "github" | null>(null)
 
@@ -20,57 +18,28 @@ const GoogleGithub = () => {
     return error instanceof Error ? error.message : `Unable to connect with ${provider}.`
   }
 
-  const generateUsername = (value: string) => {
-    const namePart = value
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 24)
-
-    return `${namePart || "user"}-${crypto.randomUUID().replaceAll("-", "").slice(0, 6)}`
-  }
-
-  const handleOAuth = (provider: "google" | "github") => {
+  const handleOAuth = async (provider: "google" | "github") => {
     setError("")
     setIsLoading(provider)
 
-    const oauthWindow = window.open("about:blank", "echo-oauth", "popup,width=500,height=700")
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: provider === "google" ? { access_type: "offline", prompt: "consent" } : undefined,
+        },
+      })
 
-    if (!oauthWindow) {
-      setError("Your browser blocked the Google/GitHub sign-in popup. Allow popups for this site and try again.")
+      if (oauthError) {
+        setError(getErrorMessage(oauthError, provider))
+        setIsLoading(null)
+      }
+    } catch (oauthError) {
+      setError(getErrorMessage(oauthError, provider))
       setIsLoading(null)
-      return
     }
-
-    pb.collection("users").authWithOAuth2({
-      provider,
-      urlCallback: (url) => {
-        oauthWindow.location.href = url
-      },
-    })
-      .then(async (authData) => {
-        const record = authData.record as typeof authData.record & {
-          userName?: string
-          username?: string
-          name?: string
-          email?: string
-        }
-        const currentUsername = record.userName || record.username
-
-        if (!currentUsername) {
-          const username = generateUsername(record.name || record.email || provider)
-          const updatedRecord = await pb.collection("users").update(record.id, { userName: username })
-          pb.authStore.save(pb.authStore.token, updatedRecord)
-        }
-
-        router.push("/")
-      })
-      .catch((err) => {
-        setError(getErrorMessage(err, provider))
-        oauthWindow.close()
-      })
-      .finally(() => setIsLoading(null))
   }
 
   return (

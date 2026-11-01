@@ -3,7 +3,7 @@
 import AuthAlert from "@/components/myComponents/AuthAlert"
 import CustomInput from "@/components/myComponents/CustomInput"
 import FormHeading from "@/components/myComponents/FormHeading"
-import { pb } from "@/lib/pocketbase"
+import { createSupabaseBrowserClient } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import { ArrowLeft, Lock } from "lucide-react"
 import Link from "next/link"
@@ -13,7 +13,6 @@ import { useState } from "react"
 const ResetPassword = () => {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const token = searchParams.get("token") ?? ""
     const [formData, setFormData] = useState({ password: "", passwordConfirm: "" })
     const [error, setError] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -27,11 +26,6 @@ const ResetPassword = () => {
         event.preventDefault()
         setError("")
 
-        if (!token) {
-            setError("This reset link is missing or invalid.")
-            return
-        }
-
         if (formData.password !== formData.passwordConfirm) {
             setError("Passwords do not match.")
             return
@@ -40,11 +34,11 @@ const ResetPassword = () => {
         setIsSubmitting(true)
 
         try {
-            await pb.collection("users").confirmPasswordReset(
-                token,
-                formData.password,
-                formData.passwordConfirm
-            )
+            const supabase = createSupabaseBrowserClient()
+            const { error: updateError } = await supabase.auth.updateUser({
+                password: formData.password,
+            })
+            if (updateError) throw updateError
             router.replace("/auth")
         } catch (err) {
             setError(err instanceof Error ? err.message : "Unable to reset your password.")

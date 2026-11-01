@@ -1,5 +1,5 @@
-import type { RecordModel } from "pocketbase"
-import { getPocketBaseErrorMessage, pb } from "@/lib/pocketbase"
+import type { BackendRecord } from "@/lib/backend"
+import { backend } from "@/lib/backend"
 
 export interface Post {
     id: string
@@ -18,7 +18,7 @@ export interface Post {
     repostedByViewer: boolean
 }
 
-type PostRecord = RecordModel & {
+type PostRecord = BackendRecord & {
     author: string
     content: string
     commentsEnabled?: boolean
@@ -31,7 +31,7 @@ type PostRecord = RecordModel & {
     likedByViewer?: boolean
     repostedByViewer?: boolean
     expand?: {
-        author?: RecordModel & {
+        author?: BackendRecord & {
             name?: string
             username?: string
             userName?: string
@@ -59,7 +59,7 @@ export function formatPostTime(created: string) {
 
 export async function fetchFeedPosts(): Promise<{ posts: Post[]; error: string | null }> {
     try {
-        const records = await pb.collection("posts").getFullList({
+        const records = await backend.collection("posts").getFullList({
             sort: "-created",
             expand: "author",
             requestKey: null,
@@ -72,18 +72,18 @@ export async function fetchFeedPosts(): Promise<{ posts: Post[]; error: string |
     } catch (error) {
         return {
             posts: [],
-            error: getPocketBaseErrorMessage(error, "Could not load posts."),
+            error: error instanceof Error ? error.message : "Could not load posts.",
         }
     }
 }
 
-export function toPost(record: RecordModel): Post {
+export function toPost(record: BackendRecord): Post {
     const post = record as PostRecord
     const author = post.expand?.author
     const name = author?.name || author?.username || author?.userName || "Echo user"
     const username = author?.username || author?.userName || "account"
     const userAvatar = author?.avatar && author.collectionId
-        ? pb.files.getURL(author, author.avatar)
+        ? backend.files.getURL(author, author.avatar)
         : ""
 
     return {

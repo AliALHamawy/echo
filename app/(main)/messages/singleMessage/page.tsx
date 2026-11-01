@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { pb } from "@/lib/pocketbase";
+import { backend } from "@/lib/backend";
 import MessageHeader from "@/components/myComponents/MessageHeader";
 import MessageList from "@/components/myComponents/MessageList";
 import MessageInput from "@/components/myComponents/MessageInput";
@@ -22,7 +22,7 @@ import {
 const Page = () => {
     const searchParams = useSearchParams();
     const peerUserId = searchParams.get("userId");
-    const [currentUserId, setCurrentUserId] = useState(() => pb.authStore.record?.id ?? "");
+    const [currentUserId, setCurrentUserId] = useState(() => backend.authStore.record?.id ?? "");
     const [otherUser, setOtherUser] = useState<any>(null);
     const [messages, setMessages] = useState<ChatConversation["messages"]>([]);
     const [isSending, setIsSending] = useState(false);
@@ -30,15 +30,15 @@ const Page = () => {
     const [sendError, setSendError] = useState("");
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const currentUser = pb.authStore.record;
+    const currentUser = backend.authStore.record;
 
     useEffect(() => {
         const syncAuth = () => {
-            setCurrentUserId(pb.authStore.record?.id ?? "");
+            setCurrentUserId(backend.authStore.record?.id ?? "");
         };
 
         syncAuth();
-        return pb.authStore.onChange(syncAuth);
+        return backend.authStore.onChange(syncAuth);
     }, []);
 
     const scrollToBottom = () => {
@@ -46,7 +46,7 @@ const Page = () => {
     };
 
     const loadConversation = useCallback(async () => {
-        const authUserId = pb.authStore.record?.id;
+        const authUserId = backend.authStore.record?.id;
 
         if (!authUserId) {
             setOtherUser(null);
@@ -62,11 +62,11 @@ const Page = () => {
             let targetUser = null as any;
 
             if (peerUserId) {
-                targetUser = await pb.collection("users").getOne(peerUserId, { requestKey: null }).catch(() => null);
+                targetUser = await backend.collection("users").getOne(peerUserId, { requestKey: null }).catch(() => null);
             }
 
             if (!targetUser) {
-                const users = await pb
+                const users = await backend
                     .collection("users")
                     .getFullList({
                         filter: `id != "${authUserId}"`,
@@ -106,7 +106,7 @@ const Page = () => {
     }, [loading, messages]);
 
     useEffect(() => {
-        const authUserId = pb.authStore.record?.id;
+        const authUserId = backend.authStore.record?.id;
         const otherUserId = otherUser?.id;
 
         if (!authUserId || !otherUserId) return;
@@ -114,7 +114,7 @@ const Page = () => {
         let active = true;
         let unsubscribe: (() => void) | null = null;
 
-        void pb.collection("messages").subscribe("*", (event) => {
+        void backend.collection("messages").subscribe("*", (event) => {
             const record = event.record as MessageRecord;
             if (!messageInvolvesThread(record, authUserId, otherUserId)) return;
 
@@ -141,7 +141,7 @@ const Page = () => {
     }, [currentUserId, otherUser?.id]);
 
     const handleSendMessage = async (value: string) => {
-        const authUserId = pb.authStore.record?.id;
+        const authUserId = backend.authStore.record?.id;
         if (!authUserId || !otherUser || !value.trim()) return;
 
         setIsSending(true);

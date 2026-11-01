@@ -3,7 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { pb } from "@/lib/pocketbase"
+import { backend } from "@/lib/backend"
 import { Send, Trash2 } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 
@@ -21,7 +21,7 @@ interface PostCommentsProps {
     onCommentCountChange: (count: number) => void
 }
 
-function getPocketBaseErrorMessage(error: unknown, fallback: string) {
+function getBackendErrorMessage(error: unknown, fallback: string) {
     if (typeof error === "object" && error !== null && "response" in error) {
         const response = (error as { response?: { message?: string; data?: Record<string, { message?: string }> } }).response
         const fieldError = Object.entries(response?.data ?? {}).find(([, value]) => value?.message)
@@ -43,7 +43,7 @@ const PostComments = ({ postId, onCommentCountChange }: PostCommentsProps) => {
 
     const loadComments = useCallback(async () => {
         try {
-            const records = await pb.collection("comments").getFullList<CommentRecord>({
+            const records = await backend.collection("comments").getFullList<CommentRecord>({
                 expand: "author",
                 requestKey: null,
             })
@@ -51,7 +51,7 @@ const PostComments = ({ postId, onCommentCountChange }: PostCommentsProps) => {
             setComments(postComments)
             onCommentCountChange(postComments.length)
         } catch (commentError) {
-            setError(getPocketBaseErrorMessage(commentError, "Comments are unavailable right now."))
+            setError(getBackendErrorMessage(commentError, "Comments are unavailable right now."))
         } finally {
             setIsLoading(false)
         }
@@ -62,17 +62,17 @@ const PostComments = ({ postId, onCommentCountChange }: PostCommentsProps) => {
     }, [loadComments])
 
     const submitComment = async () => {
-        const user = pb.authStore.record
+        const user = backend.authStore.record
         if (!user || !content.trim() || isSubmitting) return
 
         setIsSubmitting(true)
         setError("")
         try {
-            await pb.collection("comments").create({ post: postId, author: user.id, content: content.trim() })
+            await backend.collection("comments").create({ post: postId, author: user.id, content: content.trim() })
             setContent("")
             await loadComments()
         } catch (commentError) {
-            setError(getPocketBaseErrorMessage(commentError, "Unable to add your comment."))
+            setError(getBackendErrorMessage(commentError, "Unable to add your comment."))
         } finally {
             setIsSubmitting(false)
         }
@@ -80,10 +80,10 @@ const PostComments = ({ postId, onCommentCountChange }: PostCommentsProps) => {
 
     const deleteComment = async (commentId: string) => {
         try {
-            await pb.collection("comments").delete(commentId)
+            await backend.collection("comments").delete(commentId)
             await loadComments()
         } catch (commentError) {
-            setError(getPocketBaseErrorMessage(commentError, "Unable to delete this comment."))
+            setError(getBackendErrorMessage(commentError, "Unable to delete this comment."))
         }
     }
 
@@ -92,7 +92,7 @@ const PostComments = ({ postId, onCommentCountChange }: PostCommentsProps) => {
             {isLoading ? <p className="text-xs text-muted-foreground">Loading comments...</p> : comments.map((comment) => {
                 const author = comment.expand?.author
                 const name = author?.name || author?.username || "Echo user"
-                const avatar = author?.avatar && author.collectionId ? pb.files.getURL(author, author.avatar) : undefined
+                const avatar = author?.avatar && author.collectionId ? backend.files.getURL(author, author.avatar) : undefined
                 return (
                     <div key={comment.id} className="group flex gap-3 border-b border-border/50 px-2 py-3 transition-colors last:border-b-0 hover:bg-muted/20">
                         <Avatar className="size-8 shrink-0"><AvatarImage src={avatar} /><AvatarFallback className="text-[10px]">{name.slice(0, 2).toUpperCase()}</AvatarFallback></Avatar>
@@ -100,7 +100,7 @@ const PostComments = ({ postId, onCommentCountChange }: PostCommentsProps) => {
                             <p className="text-xs font-semibold leading-4 text-foreground">{name}</p>
                             <p className="mt-0.5 break-words text-sm leading-5 text-foreground/75">{comment.content}</p>
                         </div>
-                        {pb.authStore.record?.id === comment.author && <button type="button" onClick={() => void deleteComment(comment.id)} aria-label="Delete comment" className="self-start p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"><Trash2 className="size-3.5" /></button>}
+                        {backend.authStore.record?.id === comment.author && <button type="button" onClick={() => void deleteComment(comment.id)} aria-label="Delete comment" className="self-start p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"><Trash2 className="size-3.5" /></button>}
                     </div>
                 )
             })}

@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import Link from "next/link";
-import { pb } from "@/lib/pocketbase";
+import { backend } from "@/lib/backend";
 import {
   buildConversationSummaries,
   fetchInboxMessages,
@@ -44,7 +44,7 @@ const Messages = () => {
   const [showSearch, setShowSearch] = useState(false);
 
   const loadConversations = useCallback(async () => {
-    const currentUser = pb.authStore.record;
+    const currentUser = backend.authStore.record;
 
     if (!currentUser) {
       setConversations([]);
@@ -54,7 +54,7 @@ const Messages = () => {
 
     try {
       const [users, messageRecords] = await Promise.all([
-        pb.collection("users").getFullList({
+        backend.collection("users").getFullList({
           filter: `id != "${currentUser.id}"`,
           sort: "-updated",
           requestKey: null,
@@ -108,13 +108,13 @@ const Messages = () => {
   }, [loadConversations]);
 
   useEffect(() => {
-    const currentUser = pb.authStore.record;
+    const currentUser = backend.authStore.record;
     if (!currentUser) return;
 
     let active = true;
     let unsubscribe: (() => void) | null = null;
 
-    void pb.collection("messages").subscribe("*", (event) => {
+    void backend.collection("messages").subscribe("*", (event) => {
       const record = event.record as MessageRecord;
       if (!messageInvolvesUser(record, currentUser.id)) return;
       void loadConversations();

@@ -4,7 +4,7 @@ import GeneralSettings from "@/components/myComponents/GeneralSettings";
 import NotificationsSettings from "@/components/myComponents/NotificationsSettings";
 import SecuritySettings from "@/components/myComponents/SecuritySettings";
 import { Button } from "@/components/ui/button";
-import { pb } from "@/lib/pocketbase";
+import { backend } from "@/lib/backend";
 import { applyTheme, type ThemePreference } from "@/lib/theme";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from 'react'
@@ -55,7 +55,7 @@ const Settings = () => {
   useEffect(() => {
     const loadSettings = async () => {
       await Promise.resolve();
-      const userSettings = pb.authStore.record?.settings as Partial<SettingsState> | undefined;
+      const userSettings = backend.authStore.record?.settings as Partial<SettingsState> | undefined;
       setSettings({
         ...defaultSettings,
         ...userSettings,
@@ -79,7 +79,7 @@ const Settings = () => {
   };
 
   const saveSettings = async () => {
-    const user = pb.authStore.record;
+    const user = backend.authStore.record;
     if (!user) {
       setError("You must be signed in to save settings.");
       return;
@@ -90,8 +90,8 @@ const Settings = () => {
     setIsSaving(true);
 
     try {
-      const updatedUser = await pb.collection("users").update(user.id, { settings });
-      pb.authStore.save(pb.authStore.token, updatedUser);
+      const updatedUser = await backend.collection("users").update(user.id, { settings });
+      backend.authStore.save(backend.authStore.token, updatedUser);
       setSaved(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save settings.");

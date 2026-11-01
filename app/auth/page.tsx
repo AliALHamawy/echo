@@ -1,6 +1,7 @@
 import AuthLeftMid from "@/components/myComponents/AuthLeftMid"
 import AuthRightSection from "@/components/myComponents/AuthRightSection"
 import Logo from "@/components/myComponents/Logo"
+import { Suspense } from "react"
 
 const page = () => {
     return (
@@ -22,7 +23,9 @@ const page = () => {
                         </div>
                     </div>
                     <div className="min-h-full w-full lg:w-1/2 p-12 relative max-w-md mx-auto">
-                        <AuthRightSection/>
+                        <Suspense fallback={null}>
+                            <AuthRightSection/>
+                        </Suspense>
                     </div>
                 </div>
             </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { pb } from "@/lib/pocketbase"
+import { backend } from "@/lib/backend"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -10,7 +10,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         const checkAuth = () => {
-            if (!pb.authStore.isValid) {
+            if (!backend.authStore.isValid) {
                 router.replace("/auth")
                 return
             }
@@ -18,8 +18,8 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
             setIsChecking(false)
         }
 
-        checkAuth()
-        return pb.authStore.onChange(() => checkAuth())
+        void backend.authStore.load().then(checkAuth)
+        return backend.authStore.onChange(() => checkAuth())
     }, [router])
 
     if (isChecking) {

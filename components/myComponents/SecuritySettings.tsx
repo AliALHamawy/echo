@@ -4,13 +4,13 @@ import SettibgCard from '@/components/myComponents/SettibgCard'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
-import { pb } from '@/lib/pocketbase'
+import { backend } from '@/lib/backend'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 const SecuritySettings = () => {
   const router = useRouter()
-  const user = pb.authStore.record
+  const user = backend.authStore.record
   const username = user?.username || user?.userName || ''
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [confirmation, setConfirmation] = useState('')
@@ -18,7 +18,7 @@ const SecuritySettings = () => {
   const [deleteError, setDeleteError] = useState('')
 
   const handleSignOut = () => {
-    pb.authStore.clear()
+    backend.authStore.clear()
     router.replace('/auth')
   }
 
@@ -36,14 +36,14 @@ const SecuritySettings = () => {
     setIsDeleting(true)
 
     try {
-      const userPosts = await pb.collection('posts').getFullList({
+      const userPosts = await backend.collection('posts').getFullList({
         filter: `author = "${user.id}"`,
         requestKey: null,
       })
 
-      await Promise.all(userPosts.map((post) => pb.collection('posts').delete(post.id)))
-      await pb.collection('users').delete(user.id)
-      pb.authStore.clear()
+      await Promise.all(userPosts.map((post) => backend.collection('posts').delete(post.id)))
+      await backend.collection('users').delete(user.id)
+      backend.authStore.clear()
       router.replace('/auth')
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : 'Unable to delete your account.')

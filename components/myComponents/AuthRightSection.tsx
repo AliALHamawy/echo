@@ -1,12 +1,16 @@
 "use client"
 import { cn } from "@/lib/utils"
+import { useSearchParams } from "next/navigation"
 import { useState } from "react"
 import SignIn from "@/components/myComponents/SignIn"
 import CreateAccount from "@/components/myComponents/CreateAccount"
+import AuthAlert from "@/components/myComponents/AuthAlert"
 import { motion, AnimatePresence } from "motion/react"
 
 const AuthRightSection = () => {
     const [user, setUser] = useState<"signIn" | "createAccount">("signIn")
+    const searchParams = useSearchParams()
+    const callbackError = searchParams.get("error") ?? ""
 
     // تحديد اتجاه الحركة بناءً على التبويب المختار
     const isSignIn = user === "signIn"
@@ -56,6 +60,7 @@ const AuthRightSection = () => {
 
             {/* Form Animation Container */}
             <div className="w-full relative">
+                {callbackError && <AuthAlert message={callbackError} variant="error" />}
                 <AnimatePresence mode="wait" initial={false}>
                     <motion.div
                         key={user}

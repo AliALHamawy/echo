@@ -1,13 +1,13 @@
 'use client'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { pb } from '@/lib/pocketbase'
+import { backend } from '@/lib/backend'
 import Link from 'next/link'
 
 const Account = () => {
-    const user = pb.authStore.record
+    const user = backend.authStore.record
     const name = user?.name || user?.username || 'Account'
     const avatar = user?.avatar && user?.collectionId
-        ? pb.files.getURL(user, user.avatar)
+        ? backend.files.getURL(user, user.avatar)
         : undefined
 
     return (

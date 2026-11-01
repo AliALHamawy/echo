@@ -3,7 +3,7 @@
 import AuthAlert from "@/components/myComponents/AuthAlert"
 import CustomInput from "@/components/myComponents/CustomInput"
 import FormHeading from "@/components/myComponents/FormHeading"
-import { pb } from "@/lib/pocketbase"
+import { createSupabaseBrowserClient } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import { ArrowLeft, Mail } from "lucide-react"
 import Link from "next/link"
@@ -22,7 +22,11 @@ const ForgotPassword = () => {
         setIsSubmitting(true)
 
         try {
-            await pb.collection("users").requestPasswordReset(email.trim())
+            const supabase = createSupabaseBrowserClient()
+            const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+                redirectTo: `${window.location.origin}/auth/reset-password`,
+            })
+            if (resetError) throw resetError
             setSuccess("If an account uses this email, a reset link is on its way.")
             setEmail("")
         } catch (err) {

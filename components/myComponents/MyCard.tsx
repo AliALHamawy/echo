@@ -6,7 +6,7 @@ import { Ellipsis, Flag, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { SparklesOff } from "./SparklesOff";
 import type { Post } from "@/lib/posts";
-import { pb } from "@/lib/pocketbase";
+import { backend } from "@/lib/backend";
 import { useEffect, useRef, useState } from "react";
 import PostActions from "./PostActions";
 import PostComments from "./PostComments";
@@ -22,7 +22,7 @@ const MyCard = ({ post, onPostChanged }: MyCardProps) => {
     const [showComments, setShowComments] = useState(false);
     const [commentCount, setCommentCount] = useState(numberOfComments);
     const commentsRef = useRef<HTMLDivElement>(null);
-    const isOwner = pb.authStore.record?.id === post.authorId;
+    const isOwner = backend.authStore.record?.id === post.authorId;
 
     useEffect(() => {
         if (!showComments) return;
@@ -43,14 +43,14 @@ const MyCard = ({ post, onPostChanged }: MyCardProps) => {
         const content = window.prompt("Edit your post", post.postDescription)?.trim();
         if (!content || content === post.postDescription) return;
 
-        await pb.collection("posts").update(post.id, { content });
+        await backend.collection("posts").update(post.id, { content });
         onPostChanged?.();
     };
 
     const handleDelete = async () => {
         if (!window.confirm("Delete this post?")) return;
 
-        await pb.collection("posts").delete(post.id);
+        await backend.collection("posts").delete(post.id);
         onPostChanged?.();
     };
 

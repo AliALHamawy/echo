@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useState } from "react"
 import { cn } from "cn"
 import Link from "next/link"
-import { pb } from "@/lib/pocketbase"
+import { createSupabaseBrowserClient } from "@/lib/supabase"
 import AuthAlert from "@/components/myComponents/AuthAlert"
 
 
@@ -31,7 +31,11 @@ const CreateAccount = () => {
         setFormData((prev) => ({ ...prev, [id]: value }))
     }
 
-    const isFormFilled = formData.email.trim() !== "" && formData.pass.trim() !== ""
+    const isFormFilled =
+        formData.name.trim() !== "" &&
+        formData.email.trim() !== "" &&
+        formData.pass.trim() !== "" &&
+        formData.confPass.trim() !== ""
 
     const generateUsername = (name: string) => {
         const namePart = name
@@ -60,15 +64,33 @@ const CreateAccount = () => {
         try {
             const userName = generateUsername(formData.name)
 
-            await pb.collection("users").create({
-                name: formData.name,
-                userName,
-                email: formData.email,
+            const supabase = createSupabaseBrowserClient()
+            const { data, error: signUpError } = await supabase.auth.signUp({
+                email: formData.email.trim(),
                 password: formData.pass,
-                passwordConfirm: formData.confPass,
-                emailVisibility: true,
+                options: {
+                    data: {
+                        username: userName,
+                        full_name: formData.name.trim(),
+                    },
+                },
             })
-            setSuccess("Account created. You can now sign in.")
+
+            if (signUpError) throw signUpError
+
+            if (data.user && data.session) {
+                const { error: profileError } = await supabase.from("profiles").upsert({
+                    id: data.user.id,
+                    username: userName,
+                    full_name: formData.name.trim(),
+                }, { onConflict: "id" })
+
+                if (profileError) throw profileError
+            }
+
+            setSuccess(data.session
+                ? "Account created. You can now sign in."
+                : "Account created. Check your email to confirm your account.")
             setFormData({ name: "", email: "", pass: "", confPass: "" })
         } catch (err) {
             setError(err instanceof Error ? err.message : "Unable to create your account.")
@@ -86,6 +108,7 @@ const CreateAccount = () => {
 
                     <CustomInput
                         id="name"
+                        name="name"
                         label="Full name"
                         type="text"
                         placeholder="Enter your Name"
@@ -96,8 +119,9 @@ const CreateAccount = () => {
                     />
                     <CustomInput
                         id="email"
+                        name="email"
                         label="Email"
-                        type="text"
+                        type="email"
                         placeholder="you@gmail.com"
                         icon={Mail}
                         onChange={handleChange}

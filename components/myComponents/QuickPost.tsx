@@ -6,7 +6,7 @@ import { ChevronDown, Globe, Lock, MessageCircle, Repeat, Users } from "lucide-r
 import type { LucideIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { pb } from "@/lib/pocketbase";
+import { backend } from "@/lib/backend";
 interface QuickPostProps {
     onPostCreated?: () => void
 }
@@ -80,21 +80,21 @@ const QuickPost = ({ onPostCreated }: QuickPostProps) => {
     const [error, setError] = useState("");
     const hasContent = content.trim().length > 0;
     const VisibilityIcon = visibilityIcons[visibility];
-    const user = pb.authStore.record;
+    const user = backend.authStore.record;
     const userName = user?.name || user?.username || user?.email || "Your account";
     const userAvatar = user?.avatar && user?.collectionId
-        ? pb.files.getURL(user, user.avatar)
+        ? backend.files.getURL(user, user.avatar)
         : undefined;
 
     const handleSubmit = async () => {
-        const user = pb.authStore.record
+        const user = backend.authStore.record
         if (!user || !hasContent) return
 
         setError("")
         setIsSubmitting(true)
 
         try {
-            await pb.collection("posts").create({
+            await backend.collection("posts").create({
                 author: user.id,
                 content: content.trim(),
                 visibility,

@@ -1,8 +1,8 @@
-import type { RecordModel } from "pocketbase";
-import { pb } from "@/lib/pocketbase";
+import type { BackendRecord } from "@/lib/backend";
+import { backend } from "@/lib/backend";
 import type { Message, MessageStatus } from "@/types/chat";
 
-export type MessageRecord = RecordModel & {
+export type MessageRecord = BackendRecord & {
     sender: string;
     recipient: string;
     text?: string;
@@ -25,9 +25,9 @@ export function getInitials(value: string) {
         .toUpperCase();
 }
 
-export function getUserAvatarUrl(record: RecordModel | null | undefined) {
+export function getUserAvatarUrl(record: BackendRecord | null | undefined) {
     if (!record?.avatar || !record?.collectionId) return "";
-    return pb.files.getURL(record, record.avatar);
+    return backend.files.getURL(record, record.avatar);
 }
 
 export function formatConversationTime(dateString?: string) {
@@ -165,7 +165,7 @@ export function buildConversationSummaries(
 }
 
 export async function fetchInboxMessages(currentUserId: string) {
-    return pb.collection("messages").getFullList({
+    return backend.collection("messages").getFullList({
         filter: inboxFilter(currentUserId),
         sort: "-created",
         requestKey: null,
@@ -173,7 +173,7 @@ export async function fetchInboxMessages(currentUserId: string) {
 }
 
 export async function fetchThreadMessages(currentUserId: string, peerUserId: string) {
-    return pb.collection("messages").getFullList({
+    return backend.collection("messages").getFullList({
         filter: threadFilter(currentUserId, peerUserId),
         sort: "created",
         requestKey: null,
@@ -188,13 +188,13 @@ export async function markThreadAsRead(currentUserId: string, peerUserId: string
 
     await Promise.all(
         unreadIncoming.map((record) =>
-            pb.collection("messages").update(record.id, { read: true }, { requestKey: null }).catch(() => null)
+            backend.collection("messages").update(record.id, { read: true }, { requestKey: null }).catch(() => null)
         )
     );
 }
 
 export async function sendThreadMessage(currentUserId: string, peerUserId: string, text: string) {
-    return pb.collection("messages").create(
+    return backend.collection("messages").create(
         {
             sender: currentUserId,
             recipient: peerUserId,

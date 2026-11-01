@@ -5,13 +5,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { pb } from "@/lib/pocketbase"
+import { backend } from "@/lib/backend"
 import { ArrowLeft, ImagePlus, Save } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
 const EditProfile = () => {
-    const user = pb.authStore.record
+    const user = backend.authStore.record
     const [name, setName] = useState(user?.name ?? "")
     const [bio, setBio] = useState(user?.bio ?? "")
     const [avatarFile, setAvatarFile] = useState<File | null>(null)
@@ -23,10 +23,10 @@ const EditProfile = () => {
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     const currentAvatar = user?.avatar && user.collectionId
-        ? pb.files.getURL(user, user.avatar)
+        ? backend.files.getURL(user, user.avatar)
         : undefined
     const currentCover = user?.cover && user.collectionId
-        ? pb.files.getURL(user, user.cover)
+        ? backend.files.getURL(user, user.cover)
         : undefined
     const displayName = name.trim() || "Your account"
 
@@ -58,8 +58,8 @@ const EditProfile = () => {
                 formData.append("cover", coverFile)
             }
 
-            const updatedUser = await pb.collection("users").update(user.id, formData)
-            pb.authStore.save(pb.authStore.token, updatedUser)
+            const updatedUser = await backend.collection("users").update(user.id, formData)
+            backend.authStore.save(backend.authStore.token, updatedUser)
             setSuccess("Profile updated.")
             setAvatarFile(null)
             setCoverFile(null)
