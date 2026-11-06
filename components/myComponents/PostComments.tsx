@@ -4,7 +4,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { backend } from "@/lib/backend"
+import { useDelayedLoading } from "@/lib/loading"
 import { Send, Trash2 } from "lucide-react"
+import { CommentSkeleton } from "@/components/ui/skeletons/CommentSkeleton"
 import { useCallback, useEffect, useState } from "react"
 
 interface CommentRecord {
@@ -13,7 +15,7 @@ interface CommentRecord {
     author: string
     content: string
     created: string
-    expand?: { author?: { name?: string; username?: string; avatar?: string; collectionId?: string } }
+    expand?: { author?: { name?: string; username?: string; avatar_url?: string; avatar?: string; collectionId?: string } }
 }
 
 interface PostCommentsProps {
@@ -40,6 +42,7 @@ const PostComments = ({ postId, onCommentCountChange }: PostCommentsProps) => {
     const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState("")
+    const showSkeleton = useDelayedLoading(isLoading)
 
     const loadComments = useCallback(async () => {
         try {
@@ -63,15 +66,35 @@ const PostComments = ({ postId, onCommentCountChange }: PostCommentsProps) => {
 
     const submitComment = async () => {
         const user = backend.authStore.record
-        if (!user || !content.trim() || isSubmitting) return
+        const trimmedContent = content.trim()
+        if (!user || !trimmedContent || isSubmitting) return
 
         setIsSubmitting(true)
         setError("")
+        const optimisticComment: CommentRecord = {
+            id: `optimistic-${Date.now()}`,
+            post: postId,
+            author: user.id,
+            content: trimmedContent,
+            created: new Date().toISOString(),
+            expand: {
+                author: {
+                    name: user.name,
+                    username: user.username,
+                    avatar: user.avatar_url ?? user.avatar,
+                },
+            },
+        }
+        setComments((current) => [...current, optimisticComment])
+        onCommentCountChange(comments.length + 1)
+        setContent("")
         try {
-            await backend.collection("comments").create({ post: postId, author: user.id, content: content.trim() })
-            setContent("")
+            await backend.collection("comments").create({ post: postId, author: user.id, content: trimmedContent })
             await loadComments()
         } catch (commentError) {
+            setComments((current) => current.filter((comment) => comment.id !== optimisticComment.id))
+            onCommentCountChange(Math.max(0, comments.length))
+            setContent(trimmedContent)
             setError(getBackendErrorMessage(commentError, "Unable to add your comment."))
         } finally {
             setIsSubmitting(false)
@@ -89,10 +112,11 @@ const PostComments = ({ postId, onCommentCountChange }: PostCommentsProps) => {
 
     return (
         <div className="mt-4 border-t border-border pt-4">
-            {isLoading ? <p className="text-xs text-muted-foreground">Loading comments...</p> : comments.map((comment) => {
+            {showSkeleton ? <div><CommentSkeleton /><CommentSkeleton /></div> : comments.map((comment) => {
                 const author = comment.expand?.author
                 const name = author?.name || author?.username || "Echo user"
-                const avatar = author?.avatar && author.collectionId ? backend.files.getURL(author, author.avatar) : undefined
+                const avatarPath = author?.avatar_url ?? author?.avatar
+                const avatar = avatarPath ? backend.files.getURL(author, avatarPath) : undefined
                 return (
                     <div key={comment.id} className="group flex gap-3 border-b border-border/50 px-2 py-3 transition-colors last:border-b-0 hover:bg-muted/20">
                         <Avatar className="size-8 shrink-0"><AvatarImage src={avatar} /><AvatarFallback className="text-[10px]">{name.slice(0, 2).toUpperCase()}</AvatarFallback></Avatar>

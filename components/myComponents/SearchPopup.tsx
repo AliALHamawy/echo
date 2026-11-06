@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { setSearchOpen } from "@/store/slices/uiSlice"
 import { X } from "lucide-react"
@@ -9,8 +10,49 @@ import SearchRes from "@/components/myComponents/SearchRes"
 
 const SearchPopup = () => {
     const [search, setSearch] = useState<string>("")
+    const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+        if (typeof window === "undefined") return []
+        const stored = window.localStorage.getItem("echo-recent-searches")
+        if (!stored) return []
+        try {
+            const parsed = JSON.parse(stored)
+            return Array.isArray(parsed)
+                ? parsed.filter((item): item is string => typeof item === "string")
+                : []
+        } catch {
+            window.localStorage.removeItem("echo-recent-searches")
+            return []
+        }
+    })
     const dispatch = useAppDispatch()
+    const router = useRouter()
     const isOpen = useAppSelector((state) => state.ui.isSearchOpen)
+
+    const saveRecentSearch = (value: string) => {
+        const normalized = value.trim()
+        if (!normalized) return
+        setRecentSearches((current) => {
+            const next = [normalized, ...current.filter((item) => item !== normalized)].slice(0, 8)
+            window.localStorage.setItem("echo-recent-searches", JSON.stringify(next))
+            return next
+        })
+    }
+
+    const submitSearch = (value = search) => {
+        const query = value.trim()
+        if (!query) return
+        saveRecentSearch(query)
+        const cleanQuery = query.replace(/^[@#]/, "")
+        if (query.startsWith("@")) {
+            router.push(`/search?q=${encodeURIComponent(cleanQuery)}&tab=users`)
+        } else if (query.startsWith("#")) {
+            router.push(`/search?q=${encodeURIComponent(query)}&tab=posts`)
+        } else {
+            router.push(`/search?q=${encodeURIComponent(query)}`)
+        }
+        dispatch(setSearchOpen(false))
+    }
+
     if (!isOpen) return null
     return (
         <>
@@ -25,8 +67,22 @@ const SearchPopup = () => {
                             out={false}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    e.preventDefault()
+                                    submitSearch()
+                                }
+                            }}
                         />
-                        {search.trim().length === 0 ? <SearchTopics /> : <SearchRes />}
+                        {search.trim().length === 0
+                            ? <SearchTopics recentSearches={recentSearches} onSelect={(value) => {
+                                setSearch(value)
+                                submitSearch(value)
+                            }} />
+                            : <SearchRes query={search} onSelect={(value) => {
+                                saveRecentSearch(value)
+                                dispatch(setSearchOpen(false))
+                            }} />}
                     </div>
                 </div>
             </div>

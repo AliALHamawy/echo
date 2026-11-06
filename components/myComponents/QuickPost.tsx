@@ -82,8 +82,9 @@ const QuickPost = ({ onPostCreated }: QuickPostProps) => {
     const VisibilityIcon = visibilityIcons[visibility];
     const user = backend.authStore.record;
     const userName = user?.name || user?.username || user?.email || "Your account";
-    const userAvatar = user?.avatar && user?.collectionId
-        ? backend.files.getURL(user, user.avatar)
+    const avatar = user?.avatar_url ?? user?.avatar
+    const userAvatar = avatar
+        ? backend.files.getURL(user, avatar)
         : undefined;
 
     const handleSubmit = async () => {
@@ -114,7 +115,7 @@ const QuickPost = ({ onPostCreated }: QuickPostProps) => {
             <Card className="flex flex-col p-0 bg-mute-foreground rounded-lg">
                 <div className="flex gap-5 items-start p-4 pb-0 h-18 sm:h-30 ">
                     <Avatar>
-                        <AvatarImage src={userAvatar} />
+                        {userAvatar ? <AvatarImage src={userAvatar} alt={`${userName}'s avatar`} /> : null}
                         <AvatarFallback>{userName.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <textarea name="" id="" className="w-full resize-none h-full border-none outline-none" placeholder={useTypewriter(placeholders)} value={content} onChange={(e) => setContent(e.target.value)}></textarea>

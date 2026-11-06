@@ -155,7 +155,7 @@
 }
 @layer utilities {
   .cursor-pointer {
-    cursor: default !important;
+    cursor: none !important;
   }
 }
 
@@ -164,9 +164,16 @@
 *::after,
 a,
 button,
+input,
+textarea,
+select,
 [role="button"],
 input[type="submit"],
-input[type="button"] {
+input[type="button"],
+*:hover,
+*:active,
+*:focus,
+*:focus-visible {
   cursor: none !important;
 }
 @keyframes rainbow-spin {

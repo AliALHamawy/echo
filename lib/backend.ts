@@ -12,6 +12,7 @@ type AuthRecord = BackendRecord & {
     name?: string
     username?: string
     userName?: string
+    avatar_url?: string
     avatar?: string
     cover?: string
     bio?: string
@@ -126,6 +127,7 @@ export const backend = {
                 email: user.email,
                 name: profile?.full_name ?? user.user_metadata?.full_name,
                 username: profile?.username ?? user.user_metadata?.username,
+                avatar_url: profile?.avatar_url,
                 avatar: profile?.avatar_url,
                 cover: profile?.cover_url,
                 created: String(profile?.created_at ?? user.created_at),
@@ -161,9 +163,9 @@ export const backend = {
         return {
             async getFullList<T = BackendRecord>(options?: Record<string, any>) {
                 const select = name === "posts"
-                    ? "*, profiles(*)"
+                    ? "*, profiles(avatar_url, full_name, username)"
                     : name === "comments"
-                        ? "*, profiles(*)"
+                        ? "*, profiles(avatar_url, full_name, username)"
                         : "*"
                 const { data, error } = await (client as any).from(table).select(select)
                 if (error) throw error

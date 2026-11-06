@@ -58,16 +58,20 @@ const MyCard = ({ post, onPostChanged }: MyCardProps) => {
         <Card className="rounded-none p-5 bg-transparent border border-border transition-[0.3s] hover:border-foreground/15 outline-none">
             <div className="flex justify-between items-center">
                 <div className="flex justify-start items-center gap-3">
-                    <Link href={`/profile/${post.authorId}`} aria-label={`View ${name}'s profile`}>
-                        <Avatar className='h-8 w-8 transition-opacity hover:opacity-80'>
-                            <AvatarImage src={userAvatar} />
+                    <Link
+                        href={`/profile/${post.authorId}`}
+                        aria-label={`View ${name}'s profile`}
+                        className="flex items-center gap-3"
+                    >
+                        <Avatar className='h-8 w-8 cursor-pointer transition-opacity hover:opacity-80'>
+                            {userAvatar ? <AvatarImage src={userAvatar} alt={`${name}'s avatar`} /> : null}
                             <AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
+                        <div className="flex flex-col">
+                            <span className='text-sm text-foreground leading-tight hover:underline'>{name}</span>
+                            <span className='text-xs text-muted-foreground hover:underline'>{userName}</span>
+                        </div>
                     </Link>
-                    <div className="flex flex-col">
-                        <span className='text-sm text-foreground leading-tight'>{name}</span>
-                        <span className='text-xs text-muted-foreground'>{userName}</span>
-                    </div>
                     <span className='text-xs text-muted-foreground ml-2'>{createdAt}</span>
                 </div>
 

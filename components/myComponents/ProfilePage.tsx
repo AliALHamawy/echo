@@ -9,6 +9,8 @@ import MyCard from '@/components/myComponents/MyCard'
 import { toPost, type Post } from '@/lib/posts'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
+import { ProfilePostsSkeleton, ProfileSkeleton } from '@/components/ui/skeletons/ProfileSkeleton'
+import { useDelayedLoading } from '@/lib/loading'
 
 interface ProfilePageProps {
   profileUserId?: string
@@ -18,11 +20,15 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
   const [isComposerOpen, setIsComposerOpen] = useState(false)
   const [isFollowing, setIsFollowing] = useState(false)
   const [posts, setPosts] = useState<Post[]>([])
+  const [isPostsLoading, setIsPostsLoading] = useState(true)
   const currentUser = backend.authStore.record
   const [followerCount, setFollowerCount] = useState(0)
   const [followingCount, setFollowingCount] = useState(0)
   const [isFollowBusy, setIsFollowBusy] = useState(false)
   const [profileUser, setProfileUser] = useState<BackendRecord | null>(null)
+  const [isProfileLoading, setIsProfileLoading] = useState(Boolean(profileUserId))
+  const showProfileSkeleton = useDelayedLoading(isProfileLoading)
+  const showPostsSkeleton = useDelayedLoading(isPostsLoading)
   const user = profileUserId ? profileUser : currentUser
   const userId = user?.id
   const isOwnProfile = !profileUserId || profileUserId === currentUser?.id
@@ -67,6 +73,8 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
         setProfileUser(record)
       } catch {
         setProfileUser(null)
+      } finally {
+        setIsProfileLoading(false)
       }
     }
 
@@ -75,8 +83,9 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
 
   const name = user?.name || user?.username || user?.email || "Your account"
   const username = user?.username || user?.userName || "account"
-  const avatar = user?.avatar && user?.collectionId
-    ? backend.files.getURL(user, user.avatar)
+  const avatarPath = user?.avatar_url ?? user?.avatar
+  const avatar = avatarPath
+    ? backend.files.getURL(user, avatarPath)
     : undefined
   const cover = user?.cover && user?.collectionId
     ? backend.files.getURL(user, user.cover)
@@ -111,13 +120,17 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
 
   const loadPosts = useCallback(async () => {
     if (!userId) return
-    const records = await backend.collection('posts').getFullList({
-      filter: `author = "${userId}"`,
-      sort: '-created',
-      expand: 'author',
-      requestKey: null,
-    })
-    setPosts(records.map(toPost))
+    try {
+      const records = await backend.collection('posts').getFullList({
+        filter: `author = "${userId}"`,
+        sort: '-created',
+        expand: 'author',
+        requestKey: null,
+      })
+      setPosts(records.map(toPost))
+    } finally {
+      setIsPostsLoading(false)
+    }
   }, [userId])
 
   useEffect(() => {
@@ -129,6 +142,7 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
   }, [loadPosts])
 
   return (
+    showProfileSkeleton ? <ProfileSkeleton /> :
     <div className="w-full bg-background text-foreground min-h-screen">
       <div
         className="h-40 sm:h-52 w-full bg-muted border-b border-border"
@@ -139,7 +153,7 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
         <div className="flex justify-between items-end relative -mt-12 sm:-mt-16 mb-4">
           <div className="relative">
             <Avatar className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-background bg-muted">
-              <AvatarImage src={avatar} className="object-cover" />
+              {avatar ? <AvatarImage src={avatar} alt={`${name}'s avatar`} className="object-cover" /> : null}
               <AvatarFallback className="text-2xl font-bold">{initials}</AvatarFallback>
             </Avatar>
           </div>
@@ -238,7 +252,7 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
       )}
 
       <div className="flex flex-col border-t border-border">
-        {posts.map((post) => <MyCard key={post.id} post={post} onPostChanged={() => void loadPosts()} />)}
+        {showPostsSkeleton ? <ProfilePostsSkeleton /> : posts.map((post) => <MyCard key={post.id} post={post} onPostChanged={() => void loadPosts()} />)}
       </div>
     </div>
   )

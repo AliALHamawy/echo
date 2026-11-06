@@ -15,7 +15,7 @@ const page = () => {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
-                        {search.trim().length === 0 ? <SearchTopics /> : <SearchRes />}
+                        {search.trim().length === 0 ? <SearchTopics /> : <SearchRes query={search} />}
                 
             </div>
         </>

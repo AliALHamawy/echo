@@ -11,19 +11,20 @@ interface propTypes {
     out: boolean
     value?: string
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
 }
-export function SearchBar({out, value, onChange}: propTypes) {
+export function SearchBar({out, value, onChange, onKeyDown}: propTypes) {
     const dispatch = useAppDispatch();
     return (
         out===true?
         <InputGroup className=" rounded-xl has-[[data-slot=input-group-control]:focus-visible]:ring-1 w-full" onClick={() => dispatch(toggleSearch())}>
-            <InputGroupInput placeholder="Search..." value={value} onChange={onChange} />
+            <InputGroupInput placeholder="Search..." value={value} onChange={onChange} onKeyDown={onKeyDown} />
             <InputGroupAddon>
                 <SearchIcon className="text-muted-foreground" />
             </InputGroupAddon>
         </InputGroup>:
         <InputGroup className=" rounded-xl has-[[data-slot=input-group-control]:focus-visible]:ring-1 w-full" >
-            <InputGroupInput placeholder="Search..." value={value} onChange={onChange} />
+            <InputGroupInput placeholder="Search..." value={value} onChange={onChange} onKeyDown={onKeyDown} />
             <InputGroupAddon>
                 <SearchIcon className="text-muted-foreground" />
             </InputGroupAddon>

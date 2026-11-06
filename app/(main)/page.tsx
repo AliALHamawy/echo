@@ -3,12 +3,16 @@
 import MyCard from "@/components/myComponents/MyCard"
 import QuickPost from "@/components/myComponents/QuickPost"
 import { fetchFeedPosts, type Post } from "@/lib/posts"
+import { PostSkeleton } from "@/components/ui/skeletons/PostSkeleton"
+import { useDelayedLoading } from "@/lib/loading"
 import { useCallback, useEffect, useState } from "react"
+import { Suspense } from "react"
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const showSkeleton = useDelayedLoading(loading && posts.length === 0)
 
   const loadPosts = useCallback(async () => {
     setLoading(true)
@@ -24,7 +28,7 @@ export default function Home() {
   }, [loadPosts])
 
   return (
-    <>
+    <Suspense fallback={<PostSkeleton />}>
       <div className="flex flex-col p-3 gap-3">
         <QuickPost onPostCreated={() => void loadPosts()} />
         {error ? (
@@ -40,8 +44,8 @@ export default function Home() {
           </div>
         ) : null}
         <div className="flex flex-col">
-          {loading && posts.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">Loading posts...</p>
+          {showSkeleton ? (
+            <><PostSkeleton /><PostSkeleton /></>
           ) : null}
           {!loading && posts.length === 0 && !error ? (
             <p className="p-4 text-sm text-muted-foreground">No posts yet. Share the first update.</p>
@@ -51,6 +55,6 @@ export default function Home() {
           ))}
         </div>
       </div>
-    </>
+    </Suspense>
   )
 }

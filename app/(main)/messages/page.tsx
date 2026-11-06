@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import Link from "next/link";
 import { backend } from "@/lib/backend";
+import { MessagesSkeleton } from "@/components/ui/skeletons/MessagesSkeleton";
 import {
   buildConversationSummaries,
   fetchInboxMessages,
@@ -220,7 +221,7 @@ const Messages = () => {
       <div className="flex flex-col gap-0">
         <div className="flex flex-col items-center w-full border border-border divide-y divide-border">
           {loading ? (
-            <div className="w-full p-4 text-sm text-muted-foreground">Loading conversations...</div>
+            <MessagesSkeleton />
           ) : filteredConversations.length === 0 ? (
             <div className="w-full p-4 text-sm text-muted-foreground">
               {tab === "Unreaded" ? "No unread conversations." : "No conversations yet."}

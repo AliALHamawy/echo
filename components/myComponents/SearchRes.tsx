@@ -1,63 +1,111 @@
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+"use client"
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { SearchSkeleton } from "@/components/ui/skeletons/SearchSkeleton"
+import { backend } from "@/lib/backend"
+import { useDelayedLoading } from "@/lib/loading"
+import { createSupabaseBrowserClient } from "@/lib/supabase"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
+
 export interface SearchUser {
-    id: string;
-    name: string;
-    username: string;
-    avatar: string;
+    id: string
+    name: string
+    username: string
+    avatar: string
 }
 
-export const mockUsers: SearchUser[] = [
-    {
-        id: "user-1",
-        name: "Alex Johnson",
-        username: "alexj",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop",
-    },
-    {
-        id: "user-2",
-        name: "Sarah Miller",
-        username: "sarah_dev",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=256&auto=format&fit=crop",
-    },
-    {
-        id: "user-3",
-        name: "David Chen",
-        username: "davidc_ui",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=256&auto=format&fit=crop",
-    },
-    {
-        id: "user-4",
-        name: "Emma Watson",
-        username: "emma_design",
-        avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=256&auto=format&fit=crop",
-    },
-    {
-        id: "user-5",
-        name: "Michael Brown",
-        username: "mbrown_tech",
-        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256&auto=format&fit=crop",
-    },
-];
+interface SearchResProps {
+    query?: string
+    onSelect?: (query: string) => void
+}
 
-const SearchRes = () => {
+export default function SearchRes({ query, onSelect }: SearchResProps) {
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const searchQuery = query ?? searchParams.get("q") ?? ""
+    const [users, setUsers] = useState<SearchUser[]>([])
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState("")
+    const term = searchQuery.trim().replace(/^@/, "")
+    const showSkeleton = useDelayedLoading(loading && Boolean(term))
+
+    useEffect(() => {
+        queueMicrotask(() => {
+            setLoading(true)
+            setError("")
+        })
+        let cancelled = false
+        const timer = window.setTimeout(async () => {
+            setLoading(true)
+            setError("")
+            try {
+                if (!term) {
+                    if (!cancelled) setUsers([])
+                    return
+                }
+
+                const client = createSupabaseBrowserClient()
+                const { data, error: queryError } = await client
+                    .from("profiles")
+                    .select("id, full_name, username, avatar_url")
+                    .or(`full_name.ilike.%${term}%,username.ilike.%${term}%`)
+                    .limit(8)
+                if (queryError) throw queryError
+                if (cancelled) return
+
+                setUsers((data ?? []).map((profile) => ({
+                    id: profile.id,
+                    name: profile.full_name || profile.username || "Echo user",
+                    username: profile.username || "account",
+                    avatar: profile.avatar_url
+                        ? backend.files.getURL(profile, profile.avatar_url)
+                        : "",
+                })))
+            } catch (queryError) {
+                if (!cancelled) {
+                    setUsers([])
+                    setError(queryError instanceof Error ? queryError.message : "Could not search users.")
+                }
+            } finally {
+                if (!cancelled) setLoading(false)
+            }
+        }, 250)
+
+        return () => {
+            cancelled = true
+            window.clearTimeout(timer)
+        }
+    }, [searchQuery, term])
+
+    const handleSelect = (user: SearchUser) => {
+        onSelect?.(`@${user.username}`)
+        router.push(`/profile/${user.id}`)
+    }
+
+    if (showSkeleton) return <SearchSkeleton />
+    if (error) return <p className="text-sm text-destructive">{error}</p>
+    if (users.length === 0) return <p className="text-sm text-muted-foreground">No matching users.</p>
+
     return (
-        <>
-            <div className="flex flex-col gap-3 w-full items-start">
-                {mockUsers.map((item) => (
-                    <div key={item.id} className="flex items-center gap-2">
-                        <Avatar className="w-13 h-13">
-                            <AvatarImage src={item.avatar} alt={item.name} />
-                            <AvatarFallback>{item.name.slice(0, 2)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col gap-1 items-start justify-center">
-                            <span className="text-sm text-primary">{item.name}</span>
-                            <span className="text-xs text-muted-foreground">{item.username}</span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </>
+        <div className="flex w-full flex-col items-start gap-3">
+            {users.map((user) => (
+                <button
+                    key={user.id}
+                    type="button"
+                    onClick={() => handleSelect(user)}
+                    className="flex w-full cursor-pointer items-center gap-2 text-left"
+                >
+                    <Avatar className="h-13 w-13">
+                        {user.avatar ? <AvatarImage src={user.avatar} alt={`${user.name}'s avatar`} /> : null}
+                        <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <span className="flex flex-col items-start justify-center gap-1">
+                        <span className="text-sm text-primary">{user.name}</span>
+                        <span className="text-xs text-muted-foreground">@{user.username}</span>
+                    </span>
+                </button>
+            ))}
+        </div>
     )
 }
-
-export default SearchRes
