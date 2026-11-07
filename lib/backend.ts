@@ -75,6 +75,215 @@ function databaseValues(name: string, values: Record<string, unknown>) {
     return mapped
 }
 
+type NotificationAction =
+    | {
+        type: "follow"
+        userId: string
+        actorId: string
+    }
+    | {
+        type: "like" | "comment" | "post"
+        userId: string
+        actorId: string
+        postId: string
+    }
+    | {
+        type: "mention"
+        userId: string
+        actorId: string
+        postId: string
+    }
+
+async function insertNotificationSafely(action: NotificationAction): Promise<boolean> {
+    try {
+        const { error } = await createSupabaseBrowserClient()
+            .from("notifications")
+            .insert({
+                user_id: action.userId,
+                actor_id: action.actorId,
+                type: action.type,
+                ...(action.type !== "follow" ? { post_id: action.postId } : {}),
+            })
+
+        if (error) {
+            console.error("Unable to create notification:", {
+                message: error.message,
+                code: error.code,
+                details: error.details,
+                hint: error.hint,
+            })
+            return false
+        }
+
+        return true
+    } catch (error) {
+        console.error("Unable to create notification:", {
+            message: error instanceof Error ? error.message : String(error),
+            error,
+        })
+        return false
+    }
+}
+
+async function createPostNotificationsForFollowers(postId: string, authorId: string) {
+    try {
+        console.info("[post notifications] Looking up followers", { postId, authorId })
+        const client = createSupabaseBrowserClient()
+        const { data: followers, error } = await client
+            .from("follows")
+            .select("follower_id")
+            .eq("following_id", authorId)
+
+        if (error) {
+            console.error("Unable to load followers for post notifications:", error)
+            return
+        }
+
+        const followerIds = (followers ?? [])
+            .map((follower) => follower.follower_id)
+            .filter((followerId): followerId is string => Boolean(followerId && followerId !== authorId))
+
+        console.info("[post notifications] Followers found", {
+            postId,
+            authorId,
+            followerCount: followerIds.length,
+        })
+
+        const results = await Promise.all(
+            followerIds.map(async (followerId) => {
+                const inserted = await insertNotificationSafely({
+                    type: "post",
+                    userId: followerId,
+                    actorId: authorId,
+                    postId,
+                })
+
+                console.info(
+                    inserted
+                        ? "[post notifications] Notification inserted"
+                        : "[post notifications] Notification insert failed",
+                    { postId, authorId, followerId }
+                )
+                return inserted
+            })
+        )
+
+        console.info("[post notifications] Finished", {
+            postId,
+            authorId,
+            followerCount: followerIds.length,
+            insertedCount: results.filter(Boolean).length,
+        })
+    } catch (error) {
+        console.error("Unable to create post follower notifications:", {
+            message: error instanceof Error ? error.message : String(error),
+            error,
+            postId,
+            authorId,
+        })
+    }
+}
+
+async function createNotificationsForRecord(
+    name: string,
+    values: Record<string, unknown>,
+    record: Record<string, unknown>
+) {
+    try {
+        const actorId = String(
+            record.author_id ?? record.user_id ?? values.author ?? values.user_id ?? ""
+        )
+        if (!actorId) return
+
+        if (name === "follows") {
+            const followingId = String(record.following_id ?? values.following ?? "")
+            if (followingId) {
+                await insertNotificationSafely({
+                    type: "follow",
+                    userId: followingId,
+                    actorId,
+                })
+            }
+            return
+        }
+
+        if (name === "post") {
+            if (values.kind !== "like") return
+            const postId = String(record.post_id ?? values.postInteractions ?? "")
+            if (!postId) return
+
+            const { data: post } = await createSupabaseBrowserClient()
+                .from("posts")
+                .select("author_id")
+                .eq("id", postId)
+                .maybeSingle()
+            if (post?.author_id && post.author_id !== actorId) {
+                await insertNotificationSafely({
+                    type: "like",
+                    userId: post.author_id,
+                    actorId,
+                    postId,
+                })
+            }
+            return
+        }
+
+        if (name !== "posts" && name !== "comments") return
+
+        const postId = String(
+            name === "posts"
+                ? record.id ?? ""
+                : record.post_id ?? values.post ?? ""
+        )
+        const content = String(record.content ?? values.content ?? "")
+        const authorId = actorId
+        if (name === "posts" && postId) {
+            await createPostNotificationsForFollowers(postId, authorId)
+        }
+
+        if (name === "comments" && postId) {
+            const { data: post } = await createSupabaseBrowserClient()
+                .from("posts")
+                .select("author_id")
+                .eq("id", postId)
+                .maybeSingle()
+            if (post?.author_id) {
+                await insertNotificationSafely({
+                    type: "comment",
+                    userId: post.author_id,
+                    actorId: authorId,
+                    postId,
+                })
+            }
+        }
+
+        const usernames = [...content.matchAll(/(?:^|[\s([{/-])@([A-Za-z0-9_]+)/g)].map((match) => match[1])
+        if (usernames.length === 0 || !postId) return
+
+        const { data: mentionedProfiles, error } = await createSupabaseBrowserClient()
+            .from("profiles")
+            .select("id, username")
+            .in("username", [...new Set(usernames)])
+        if (error) {
+            console.error("Unable to resolve notification mentions:", error)
+            return
+        }
+
+        for (const profile of mentionedProfiles ?? []) {
+            if (profile.id !== authorId) {
+                await insertNotificationSafely({
+                    type: "mention",
+                    userId: profile.id,
+                    actorId: authorId,
+                    postId,
+                })
+            }
+        }
+    } catch (error) {
+        console.error("Unable to prepare notifications:", error)
+    }
+}
+
 function matchesFilter(record: Record<string, unknown>, filter: string): boolean {
     const expression = filter.trim().replace(/^(\()([\s\S]*)(\))$/, "$2")
     const split = (operator: string) => {
@@ -212,6 +421,7 @@ export const backend = {
                 if (values instanceof FormData) throw new Error("File uploads are only supported when updating a user profile.")
                 const { data, error } = await client.from(table).insert(databaseValues(name, values)).select().single()
                 if (error) throw error
+                void createNotificationsForRecord(name, values, data)
                 return mapRecord(data, name) as T
             },
             async update<T = BackendRecord>(id: string, values: Record<string, any> | FormData, ..._args: unknown[]) {

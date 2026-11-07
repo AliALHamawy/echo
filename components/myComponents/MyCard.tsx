@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import PostActions from "./PostActions";
 import PostComments from "./PostComments";
 import Link from "next/link";
+import { formatPostContent } from "@/lib/post-content";
 
 interface MyCardProps {
     post: Post;
@@ -113,8 +114,8 @@ const MyCard = ({ post, onPostChanged }: MyCardProps) => {
                 </DropdownMenu>
             </div>
 
-            <CardContent className="px-0 py-3 text-sm text-foreground/90">
-                {postDescription}
+            <CardContent className="whitespace-pre-wrap px-0 py-3 text-sm text-foreground/90">
+                {formatPostContent(postDescription)}
             </CardContent>
 
             <PostActions postId={post.id} likes={numberOfLikes} comments={commentCount} reposts={repost} likedByViewer={post.likedByViewer} repostedByViewer={post.repostedByViewer} commentsEnabled={post.commentsEnabled} onCommentsClick={() => setShowComments((visible) => !visible)} />

@@ -106,8 +106,12 @@ export function mapMessageRecord(record: MessageRecord, currentUserId: string): 
 export function groupMessagesByDate(records: MessageRecord[], currentUserId: string) {
     const groups: { date: string; items: Message[] }[] = [];
     const indexByDate = new Map<string, number>();
+    const seenMessageIds = new Set<string>();
 
     for (const record of records) {
+        if (seenMessageIds.has(record.id)) continue;
+        seenMessageIds.add(record.id);
+
         const date = getDateGroupLabel(record.created);
         const message = mapMessageRecord(record, currentUserId);
         const existingIndex = indexByDate.get(date);

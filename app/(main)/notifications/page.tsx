@@ -1,11 +1,12 @@
 'use client'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AtSign, Heart, MessageSquare } from "lucide-react";
-import { useId, useState } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
+import { AtSign, FileText, Heart, MessageSquare } from "lucide-react";
+import { useEffect, useId, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { AnimatePresence, motion } from "framer-motion";
 
-export type NotificationType = "follow" | "comment" | "mention" | "like";
+export type NotificationType = "follow" | "comment" | "mention" | "like" | "post";
 
 export interface NotificationItem {
   id: string;
@@ -22,92 +23,68 @@ export interface NotificationItem {
   followingState?: boolean;
 }
 
-export const mockNotifications: NotificationItem[] = [
-  {
-    id: "notif-1",
-    type: "follow",
+interface NotificationRecord {
+  id: string;
+  type: NotificationType;
+  read: boolean;
+  created_at: string;
+  actor:
+    | {
+        full_name: string | null;
+        username: string;
+        avatar_url: string | null;
+      }
+    | {
+        full_name: string | null;
+        username: string;
+        avatar_url: string | null;
+      }[]
+    | null;
+}
+
+const notificationActionText: Record<NotificationType, string> = {
+  follow: "started following you",
+  comment: "commented on your post",
+  mention: "mentioned you in a post",
+  like: "liked your post",
+  post: "shared a new post",
+};
+
+const formatNotificationTime = (createdAt: string) => {
+  const elapsedSeconds = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(createdAt).getTime()) / 1000)
+  );
+
+  if (elapsedSeconds < 60) return "just now";
+  if (elapsedSeconds < 3600) return `${Math.floor(elapsedSeconds / 60)}m ago`;
+  if (elapsedSeconds < 86400) return `${Math.floor(elapsedSeconds / 3600)}h ago`;
+  if (elapsedSeconds < 604800) return `${Math.floor(elapsedSeconds / 86400)}d ago`;
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+  }).format(new Date(createdAt));
+};
+
+const mapNotification = (record: NotificationRecord): NotificationItem => {
+  const actor = Array.isArray(record.actor) ? record.actor[0] : record.actor;
+  const name = actor?.full_name || actor?.username || "Echo user";
+
+  return {
+    id: record.id,
+    type: record.type,
     user: {
-      name: "Kai Lund",
-      initials: "KL",
+      name,
+      initials: name.slice(0, 2).toUpperCase(),
+      avatar: actor?.avatar_url ?? undefined,
     },
-    actionText: "started following you",
-    time: "2m ago",
-    isUnread: true,
+    actionText: notificationActionText[record.type],
+    time: formatNotificationTime(record.created_at),
+    isUnread: !record.read,
     followingState: false,
-  },
-  {
-    id: "notif-2",
-    type: "comment",
-    user: {
-      name: "Ines Marchetti",
-      initials: "IM",
-    },
-    actionText: "commented on your post",
-    commentOrSnippet: "The token rewrite reads so much faster now.",
-    time: "14m ago",
-    isUnread: true,
-  },
-  {
-    id: "notif-3",
-    type: "mention",
-    user: {
-      name: "Ada Vinter",
-      initials: "AV",
-    },
-    actionText: "mentioned you in a post",
-    commentOrSnippet: "@jules called this months ago — monochrome wins.",
-    time: "1h ago",
-    isUnread: true,
-  },
-  {
-    id: "notif-4",
-    type: "like",
-    user: {
-      name: "Ren Okafor",
-      initials: "RO",
-    },
-    actionText: "liked your post",
-    commentOrSnippet: "Boring wins are still wins.",
-    time: "3h ago",
-    isUnread: false,
-  },
-  {
-    id: "notif-5",
-    type: "follow",
-    user: {
-      name: "Tomas Reyes",
-      initials: "TR",
-    },
-    actionText: "started following you",
-    time: "6h ago",
-    isUnread: false,
-    followingState: true,
-  },
-  {
-    id: "notif-6",
-    type: "mention",
-    user: {
-      name: "Noor Halim",
-      initials: "NH",
-    },
-    actionText: "mentioned you in a comment",
-    commentOrSnippet: "ask @jules about the hydration profile",
-    time: "1d ago",
-    isUnread: false,
-  },
-  {
-    id: "notif-7",
-    type: "like",
-    user: {
-      name: "Mira Sol",
-      initials: "MS",
-    },
-    actionText: "liked your comment",
-    commentOrSnippet: "Type scale is a product decision.",
-    time: "2d ago",
-    isUnread: false,
-  },
-];
+  };
+};
 
 interface ReturnedElementProps {
   item: NotificationItem;
@@ -150,15 +127,63 @@ const ReturnedElement = ({ item, onToggleFollow }: ReturnedElementProps) => {
           <MessageSquare height={15} width={15} />
         </div>
       );
+    case "post":
+      return (
+        <div className="border roundwd-sm flex justify-center tems-center p-1 text-sm text-muted-foreground">
+          <FileText height={15} width={15} />
+        </div>
+      );
     default:
       return null;
   }
 };
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
+  const [userId, setUserId] = useState<string | null>(null);
   const layoutId = useId();
+
+  useEffect(() => {
+    let isMounted = true;
+    const supabase = createSupabaseBrowserClient();
+
+    const loadNotifications = async () => {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        if (userError) console.error("Unable to load notification user:", userError);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("notifications")
+        .select(
+          "id, type, read, created_at, actor:profiles!notifications_actor_id_fkey(full_name, username, avatar_url)"
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Unable to load notifications:", error);
+        return;
+      }
+
+      if (isMounted) {
+        setUserId(user.id);
+        setNotifications((data as NotificationRecord[]).map(mapNotification));
+      }
+    };
+
+    void loadNotifications();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const filterdNotifications = notifications.filter((item) => {
     switch (activeFilter) {
@@ -181,6 +206,26 @@ const Notifications = () => {
     );
   };
 
+  const markAllAsRead = async () => {
+    if (!userId || !notifications.some((item) => item.isUnread)) return;
+
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("user_id", userId)
+      .eq("read", false);
+
+    if (error) {
+      console.error("Unable to mark notifications as read:", error);
+      return;
+    }
+
+    setNotifications((prev) =>
+      prev.map((item) => ({ ...item, isUnread: false }))
+    );
+  };
+
   return (
     <>
       <div className="flex flex-col justify-center items-center py-10 px-4">
@@ -190,7 +235,7 @@ const Notifications = () => {
               <span className="text-xl font-bold">Notifications</span>
               <span className="text-xs text-muted-foreground">3 unreaded</span>
             </div>
-            <button className="text-xs text-muted-foreground transition-all duration-300 hover:bg-muted p-1 rounded-xs">
+            <button onClick={() => void markAllAsRead()} className="text-xs text-muted-foreground transition-all duration-300 hover:bg-muted p-1 rounded-xs">
               Mark all as read
             </button>
           </div>
@@ -227,38 +272,44 @@ const Notifications = () => {
           </div>
           <div className="flex flex-col w-full border border-muted divide-y divide-border">
             <AnimatePresence mode="popLayout">
-              {filterdNotifications.map((item) => (
-                <motion.div
-                  key={item.id}
-                  layout
-                  initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15 } }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
-                  className={twMerge(
-                    "flex flex-row justify-between w-full p-4 items-center",
-                    item.isUnread ? "bg-muted/20" : "bg-background"
-                  )}
-                >
-                  <div className="flex flex-row gap-2 items-center">
-                    <Avatar className="h-8 w-8">
-                      {item.user.avatar ? <AvatarImage src={item.user.avatar} /> : null}
-                      <AvatarFallback>{item.user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-col text-sm">
-                      <div className="flex gap-1 items-center">
-                        <span>{item.user.name}</span>
-                        <span className="text-muted-foreground text-xs">{item.actionText}</span>
+              {filterdNotifications.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground">
+                  There are no notifications yet.
+                </div>
+              ) : (
+                filterdNotifications.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15 } }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className={twMerge(
+                      "flex flex-row justify-between w-full p-4 items-center",
+                      item.isUnread ? "bg-muted/20" : "bg-background"
+                    )}
+                  >
+                    <div className="flex flex-row gap-2 items-center">
+                      <Avatar className="h-8 w-8">
+                        {item.user.avatar ? <AvatarImage src={item.user.avatar} /> : null}
+                        <AvatarFallback>{item.user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-col text-sm">
+                        <div className="flex gap-1 items-center">
+                          <span>{item.user.name}</span>
+                          <span className="text-muted-foreground text-xs">{item.actionText}</span>
+                        </div>
+                        {item.commentOrSnippet ? (
+                          <div className="text-xs text-muted-foreground">{item.commentOrSnippet}</div>
+                        ) : null}
+                        <div className="text-xs text-muted-foreground text-[11px] font-light">{item.time}</div>
                       </div>
-                      {item.commentOrSnippet ? (
-                        <div className="text-xs text-muted-foreground">{item.commentOrSnippet}</div>
-                      ) : null}
-                      <div className="text-xs text-muted-foreground text-[11px] font-light">{item.time}</div>
                     </div>
-                  </div>
-                  <ReturnedElement item={item} onToggleFollow={toggleFollow} />
-                </motion.div>
-              ))}
+                    <ReturnedElement item={item} onToggleFollow={toggleFollow} />
+                  </motion.div>
+                ))
+              )}
             </AnimatePresence>
           </div>
         </div>

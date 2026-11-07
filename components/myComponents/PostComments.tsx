@@ -8,6 +8,7 @@ import { useDelayedLoading } from "@/lib/loading"
 import { Send, Trash2 } from "lucide-react"
 import { CommentSkeleton } from "@/components/ui/skeletons/CommentSkeleton"
 import { useCallback, useEffect, useState } from "react"
+import { formatPostContent } from "@/lib/post-content"
 
 interface CommentRecord {
     id: string
@@ -122,7 +123,7 @@ const PostComments = ({ postId, onCommentCountChange }: PostCommentsProps) => {
                         <Avatar className="size-8 shrink-0"><AvatarImage src={avatar} /><AvatarFallback className="text-[10px]">{name.slice(0, 2).toUpperCase()}</AvatarFallback></Avatar>
                         <div className="min-w-0 flex-1">
                             <p className="text-xs font-semibold leading-4 text-foreground">{name}</p>
-                            <p className="mt-0.5 break-words text-sm leading-5 text-foreground/75">{comment.content}</p>
+                            <p className="mt-0.5 break-words whitespace-pre-wrap text-sm leading-5 text-foreground/75">{formatPostContent(comment.content)}</p>
                         </div>
                         {backend.authStore.record?.id === comment.author && <button type="button" onClick={() => void deleteComment(comment.id)} aria-label="Delete comment" className="self-start p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"><Trash2 className="size-3.5" /></button>}
                     </div>

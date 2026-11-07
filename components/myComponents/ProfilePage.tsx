@@ -69,7 +69,13 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
 
     const loadProfileUser = async () => {
       try {
-        const record = await backend.collection('users').getOne(profileUserId, { requestKey: null })
+        let record: BackendRecord
+        try {
+          record = await backend.collection('users').getOne(profileUserId, { requestKey: null })
+        } catch {
+          const username = profileUserId.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          record = await backend.collection('users').getFirstListItem(`username = "${username}"`, { requestKey: null })
+        }
         setProfileUser(record)
       } catch {
         setProfileUser(null)
@@ -182,15 +188,26 @@ const ProfilePage = ({ profileUserId }: ProfilePageProps) => {
               </>
             )}
             {!isOwnProfile && (
-              <Button
-                type="button"
-                onClick={() => void handleFollowToggle()}
-                disabled={isFollowBusy}
-                variant={isFollowing ? "secondary" : "default"}
-                className="h-9 px-5 text-xs font-semibold rounded-none disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isFollowing ? "Following" : "Follow"}
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  onClick={() => void handleFollowToggle()}
+                  disabled={isFollowBusy}
+                  variant={isFollowing ? "secondary" : "default"}
+                  className="h-9 px-5 text-xs font-semibold rounded-none disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isFollowing ? "Following" : "Follow"}
+                </Button>
+                <Button
+                  asChild
+                  variant="secondary"
+                  className="h-9 px-5 text-xs font-semibold rounded-none"
+                >
+                  <Link href={`/messages/singleMessage?userId=${encodeURIComponent(userId ?? profileUserId ?? "")}`}>
+                    Message
+                  </Link>
+                </Button>
+              </>
             )}
             <Button
               variant="ghost"

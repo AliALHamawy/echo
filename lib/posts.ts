@@ -59,14 +59,36 @@ export function formatPostTime(created: string) {
 
 export async function fetchFeedPosts(): Promise<{ posts: Post[]; error: string | null }> {
     try {
-        const records = await backend.collection("posts").getFullList({
-            sort: "-created",
-            expand: "author",
-            requestKey: null,
-        })
+        const [records, repostRecords] = await Promise.all([
+            backend.collection("posts").getFullList({
+                sort: "-created",
+                expand: "author",
+                requestKey: null,
+            }),
+            backend.collection("reposts").getFullList<{
+                post_id: string
+                user_id: string
+            }>({ requestKey: null }),
+        ])
+        const currentUserId = backend.authStore.record?.id
+        const repostsByPost = new Map<string, { count: number; viewerReposted: boolean }>()
+        for (const repost of repostRecords) {
+            const current = repostsByPost.get(repost.post_id) ?? { count: 0, viewerReposted: false }
+            current.count += 1
+            current.viewerReposted ||= repost.user_id === currentUserId
+            repostsByPost.set(repost.post_id, current)
+        }
 
         return {
-            posts: records.map(toPost),
+            posts: records.map((record) => {
+                const post = toPost(record)
+                const repost = repostsByPost.get(post.id)
+                return {
+                    ...post,
+                    repost: repost?.count ?? post.repost,
+                    repostedByViewer: repost?.viewerReposted ?? post.repostedByViewer,
+                }
+            }),
             error: null,
         }
     } catch (error) {

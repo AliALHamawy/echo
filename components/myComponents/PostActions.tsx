@@ -39,16 +39,27 @@ const PostActions = ({
 
         const loadInteractions = async () => {
             try {
-                const records = await backend.collection("post").getFullList<{
-                    postInteractions: string
-                    author: string
-                    kind: "like" | "repost"
-                }>({ requestKey: null })
+                const [interactionRecords, repostRecords] = await Promise.all([
+                    backend.collection("post").getFullList<{
+                        postInteractions: string
+                        author: string
+                        kind: "like" | "repost"
+                    }>({ requestKey: null }),
+                    backend.collection("reposts").getFullList<{
+                        post_id: string
+                        user_id: string
+                    }>({ requestKey: null }),
+                ])
+                const records = interactionRecords
+                const currentReposts = repostRecords.filter((record) => record.post_id === postId)
+                const interactionReposts = records.filter((record) => record.postInteractions === postId && record.kind === "repost")
+                const repostAuthors = new Set(currentReposts.map((record) => record.user_id))
+                interactionReposts.forEach((record) => repostAuthors.add(record.author))
                 const postInteractions = records.filter((record) => record.postInteractions === postId)
                 setLikes(postInteractions.filter((record) => record.kind === "like").length)
-                setReposts(postInteractions.filter((record) => record.kind === "repost").length)
+                setReposts(repostAuthors.size)
                 setLiked(postInteractions.some((record) => record.author === user.id && record.kind === "like"))
-                setReposted(postInteractions.some((record) => record.author === user.id && record.kind === "repost"))
+                setReposted(currentReposts.some((record) => record.user_id === user.id) || interactionReposts.some((record) => record.author === user.id))
             } catch {
                 // Keep the post's initial values if interaction hydration is unavailable.
             }
@@ -73,12 +84,25 @@ const PostActions = ({
         setError("")
 
         try {
-            const filter = `postInteractions = "${postId}" && author = "${user.id}" && kind = "${kind}"`
-            const existing = await backend.collection("post").getFirstListItem(filter).catch(() => null)
-            if (nextActive && !existing) {
-                await backend.collection("post").create({ postInteractions: postId, author: user.id, kind })
-            } else if (!nextActive && existing) {
-                await backend.collection("post").delete(existing.id)
+            if (kind === "repost") {
+                const filter = `post_id = "${postId}" && user_id = "${user.id}"`
+                const existing = await backend.collection("reposts").getFirstListItem(filter).catch(() => null)
+                const legacyFilter = `postInteractions = "${postId}" && author = "${user.id}" && kind = "repost"`
+                const legacyExisting = await backend.collection("post").getFirstListItem(legacyFilter).catch(() => null)
+                if (nextActive && !existing && !legacyExisting) {
+                    await backend.collection("reposts").create({ post_id: postId, user_id: user.id })
+                } else if (!nextActive) {
+                    if (existing) await backend.collection("reposts").delete(existing.id)
+                    if (legacyExisting) await backend.collection("post").delete(legacyExisting.id)
+                }
+            } else {
+                const filter = `postInteractions = "${postId}" && author = "${user.id}" && kind = "${kind}"`
+                const existing = await backend.collection("post").getFirstListItem(filter).catch(() => null)
+                if (nextActive && !existing) {
+                    await backend.collection("post").create({ postInteractions: postId, author: user.id, kind })
+                } else if (!nextActive && existing) {
+                    await backend.collection("post").delete(existing.id)
+                }
             }
         } catch (interactionError) {
             setActive(isActive)

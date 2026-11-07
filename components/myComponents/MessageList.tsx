@@ -18,9 +18,21 @@ const MessageList = ({
     currentUserAvatar,
     currentUserInitials = "ME",
 }: MessageListProps) => {
+    const seenMessageIds = new Set<string>();
+    const uniqueGroups = messages
+        .map((group) => ({
+            ...group,
+            items: group.items.filter((item) => {
+                if (seenMessageIds.has(item.id)) return false;
+                seenMessageIds.add(item.id);
+                return true;
+            }),
+        }))
+        .filter((group) => group.items.length > 0);
+
     return (
         <div className="flex flex-col space-y-6 px-2 py-6 w-full relative overflow-y-auto no-scrollbar">
-            {messages.map((group) => (
+            {uniqueGroups.map((group) => (
                 <div key={group.date} className="flex flex-col space-y-4">
                     <div className="flex justify-center my-2">
                         <span className="text-xs text-muted-foreground bg-muted/40 px-3 py-1 rounded-full">

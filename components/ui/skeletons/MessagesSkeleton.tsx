@@ -13,7 +13,6 @@ export function MessagesSkeleton() {
             <Skeleton className="h-2.5 w-10 shrink-0" />
           </div>
         ))}
-    
     </div>
   )
 }
